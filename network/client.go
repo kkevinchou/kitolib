@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net"
 	"time"
-
-	"github.com/kkevinchou/kito/kito/settings"
 )
 
 type commandFrameFunc func() int
@@ -48,9 +46,6 @@ func Connect(host, port, connectionType string) (*Client, int, error) {
 	fmt.Println("connecting to " + address + " via " + connectionType)
 
 	dialFunc := net.Dial
-	if settings.LatencyInjection > 0 {
-		dialFunc = WrapDialFunc(dialFunc, settings.LatencyInjection)
-	}
 
 	conn, err := dialFunc(connectionType, address)
 	if err != nil {

@@ -2,9 +2,7 @@ package model
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/kkevinchou/kito/kito/directory"
-	"github.com/kkevinchou/kito/kito/settings"
-	"github.com/kkevinchou/kito/kito/utils"
+	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
@@ -18,15 +16,22 @@ type Mesh struct {
 	meshChunks []*MeshChunk
 }
 
+func (m *Mesh) InitializeRenderingProperties(modelConfig *ModelConfig, assetManager assets.AssetManager) {
+	for _, mc := range m.meshChunks {
+		mc.InitializeRenderingProperties(modelConfig, assetManager)
+	}
+}
+
 func NewMeshChunk(spec *modelspec.MeshChunkSpecification) *MeshChunk {
 	mc := &MeshChunk{
 		spec: spec,
 	}
-	if utils.IsClient() {
-		mc.initializeTexture()
-		mc.initializeOpenGLObjects()
-	}
 	return mc
+}
+
+func (m *MeshChunk) InitializeRenderingProperties(modelConfig *ModelConfig, assetManager assets.AssetManager) {
+	m.initializeTexture(assetManager)
+	m.initializeOpenGLObjects(modelConfig)
 }
 
 func (m *MeshChunk) VAO() uint32 {
@@ -49,14 +54,13 @@ func (m *MeshChunk) PBRMaterial() *modelspec.PBRMaterial {
 	return m.spec.PBRMaterial
 }
 
-func (m *MeshChunk) initializeTexture() {
+func (m *MeshChunk) initializeTexture(assetManager assets.AssetManager) {
 	if m.spec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureIndex != nil {
-		assetManager := directory.GetDirectory().AssetManager()
 		m.textureID = &assetManager.GetTexture(m.spec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName).ID
 	}
 }
 
-func (m *MeshChunk) initializeOpenGLObjects() {
+func (m *MeshChunk) initializeOpenGLObjects(modelConfig *ModelConfig) {
 	// initialize the VAO
 	var vao uint32
 	gl.GenVertexArrays(1, &vao)
@@ -81,7 +85,7 @@ func (m *MeshChunk) initializeOpenGLObjects() {
 			texture.X(), texture.Y(),
 		)
 
-		ids, weights := FillWeights(jointIDs, jointWeights)
+		ids, weights := FillWeights(jointIDs, jointWeights, modelConfig.MaxAnimationJointWeights)
 		for _, id := range ids {
 			jointIDsAttribute = append(jointIDsAttribute, int32(id))
 		}
@@ -110,7 +114,7 @@ func (m *MeshChunk) initializeOpenGLObjects() {
 	gl.GenBuffers(1, &vboJointIDs)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vboJointIDs)
 	gl.BufferData(gl.ARRAY_BUFFER, len(jointIDsAttribute)*4, gl.Ptr(jointIDsAttribute), gl.STATIC_DRAW)
-	gl.VertexAttribIPointer(3, int32(settings.AnimationMaxJointWeights), gl.INT, int32(settings.AnimationMaxJointWeights)*4, nil)
+	gl.VertexAttribIPointer(3, int32(modelConfig.MaxAnimationJointWeights), gl.INT, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
 	gl.EnableVertexAttribArray(3)
 
 	// lay out the joint weights in a VBO
@@ -118,7 +122,7 @@ func (m *MeshChunk) initializeOpenGLObjects() {
 	gl.GenBuffers(1, &vboJointWeights)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vboJointWeights)
 	gl.BufferData(gl.ARRAY_BUFFER, len(jointWeightsAttribute)*4, gl.Ptr(jointWeightsAttribute), gl.STATIC_DRAW)
-	gl.VertexAttribPointer(4, int32(settings.AnimationMaxJointWeights), gl.FLOAT, false, int32(settings.AnimationMaxJointWeights)*4, nil)
+	gl.VertexAttribPointer(4, int32(modelConfig.MaxAnimationJointWeights), gl.FLOAT, false, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
 	gl.EnableVertexAttribArray(4)
 
 	// set up the EBO, each triplet of indices point to three vertices
@@ -129,7 +133,7 @@ func (m *MeshChunk) initializeOpenGLObjects() {
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(m.spec.VertexIndices)*4, gl.Ptr(m.spec.VertexIndices), gl.STATIC_DRAW)
 }
 
-func NewMesh(spec *modelspec.MeshSpecification) *Mesh {
+func NewMesh(spec *modelspec.MeshSpecification, modelConfig *ModelConfig) *Mesh {
 	var meshChunks []*MeshChunk
 	for _, mc := range spec.MeshChunks {
 		meshChunk := NewMeshChunk(mc)

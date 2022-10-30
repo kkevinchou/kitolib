@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kito/kito/utils"
 	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/collision/collider"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 type ContactsBySeparatingDistance []*Contact
@@ -58,20 +58,11 @@ func CheckCollisionCapsuleTriMesh(capsule collider.Capsule, triangulatedMesh col
 	return contacts
 }
 
-// func CheckCollisionLineTriangle(line collider.Line, triangle collider.Triangle) *Contact {
-// 	dir1 := line.P1.Sub(line.P2)
-// 	dir2 := line.P2.Sub(line.P1)
-
-// 	return nil
-// }
-
 func CheckCollisionCapsuleTriangle(capsule collider.Capsule, triangle collider.Triangle) *Contact {
 	closestPoints, closestPointsDistance := checks.ClosestPointsLineVSTriangle(
 		collider.Line{P1: capsule.Top, P2: capsule.Bottom},
 		triangle,
 	)
-	// closestPointCapsule := closestPoints[0]
-	// closestPointTriangle := closestPoints[1]
 
 	if closestPointsDistance < capsule.Radius {
 		separatingDistance := capsule.Radius - closestPointsDistance

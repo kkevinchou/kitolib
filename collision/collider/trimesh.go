@@ -2,8 +2,8 @@ package collider
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/libutils"
 	"github.com/kkevinchou/kitolib/model"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 type Mesh interface {
@@ -52,9 +52,9 @@ func NewTriMesh(model *model.Model) TriMesh {
 			vertices := meshChunk.Vertices()
 			for i := 0; i < len(vertices); i += 3 {
 				points := []mgl64.Vec3{
-					libutils.Vec3F32ToF64(vertices[i].Position),
-					libutils.Vec3F32ToF64(vertices[i+1].Position),
-					libutils.Vec3F32ToF64(vertices[i+2].Position),
+					utils.Vec3F32ToF64(vertices[i].Position),
+					utils.Vec3F32ToF64(vertices[i+1].Position),
+					utils.Vec3F32ToF64(vertices[i+2].Position),
 				}
 				triMesh.Triangles = append(triMesh.Triangles, NewTriangle(points))
 			}

@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/kkevinchou/kitolib/libutils"
 	"github.com/kkevinchou/kitolib/model"
 	"github.com/kkevinchou/kitolib/modelspec"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 type AnimationPlayer struct {
@@ -245,7 +245,7 @@ func interpolatePoses(j1, j2 map[int]*modelspec.JointTransform, progression floa
 
 		// WTF - this lerp doesn't look right when interpolating keyframes???
 		// rotationQuat := mgl32.QuatLerp(k1JointTransform.Rotation, k2JointTransform.Rotation, progression)
-		rotation := libutils.QInterpolate(k1JointTransform.Rotation, k2JointTransform.Rotation, progression)
+		rotation := utils.QInterpolate(k1JointTransform.Rotation, k2JointTransform.Rotation, progression)
 
 		translation := k1JointTransform.Translation.Add(k2JointTransform.Translation.Sub(k1JointTransform.Translation).Mul(progression))
 		scale := k1JointTransform.Scale.Add(k2JointTransform.Scale.Sub(k1JointTransform.Scale).Mul(progression))

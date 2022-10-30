@@ -2,26 +2,43 @@ package model
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
-type Model struct {
-	meshes    []*Mesh
-	modelSpec *modelspec.ModelSpecification
+type IAssetManager interface {
+	GetTexture(textureName string) uint32
 }
 
-func NewModel(spec *modelspec.ModelSpecification) *Model {
+type ModelConfig struct {
+	MaxAnimationJointWeights int
+}
+
+type Model struct {
+	meshes      []*Mesh
+	modelSpec   *modelspec.ModelSpecification
+	modelConfig *ModelConfig
+}
+
+func NewModel(spec *modelspec.ModelSpecification, modelConfig *ModelConfig) *Model {
 	var meshes []*Mesh
 	for _, ms := range spec.Meshes {
-		meshes = append(meshes, NewMesh(ms))
+		meshes = append(meshes, NewMesh(ms, modelConfig))
 	}
 
 	m := &Model{
-		modelSpec: spec,
-		meshes:    meshes,
+		modelSpec:   spec,
+		meshes:      meshes,
+		modelConfig: modelConfig,
 	}
 
 	return m
+}
+
+func (m *Model) InitializeRenderingProperties(assetManager assets.AssetManager) {
+	for _, ms := range m.meshes {
+		ms.InitializeRenderingProperties(m.modelConfig, assetManager)
+	}
 }
 
 func (m *Model) RootJoint() *modelspec.JointSpec {

@@ -3,25 +3,24 @@ package model
 import (
 	"sort"
 
-	"github.com/kkevinchou/kito/kito/settings"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 // if we exceed settings.AnimationMaxJointWeights, drop the weakest weights and normalize
 // if we're below settings.AnimationMaxJointWeights, fill in dummy weights so we always have "settings.AnimationMaxJointWeights" number of weights
-func FillWeights(jointIDs []int, weights []float32) ([]int, []float32) {
+func FillWeights(jointIDs []int, weights []float32, maxAnimationJointWeights int) ([]int, []float32) {
 	j := []int{}
 	w := []float32{}
 
-	if len(jointIDs) <= settings.AnimationMaxJointWeights {
+	if len(jointIDs) <= maxAnimationJointWeights {
 		j = append(j, jointIDs...)
 		w = append(w, weights...)
 		// fill in empty jointIDs and weights
-		for i := 0; i < settings.AnimationMaxJointWeights-len(jointIDs); i++ {
+		for i := 0; i < maxAnimationJointWeights-len(jointIDs); i++ {
 			j = append(j, 0)
 			w = append(w, 0)
 		}
-	} else if len(jointIDs) > settings.AnimationMaxJointWeights {
+	} else if len(jointIDs) > maxAnimationJointWeights {
 		jointWeights := []JointWeight{}
 		for i := range jointIDs {
 			jointWeights = append(jointWeights, JointWeight{JointID: jointIDs[i], Weight: weights[i]})
@@ -29,7 +28,7 @@ func FillWeights(jointIDs []int, weights []float32) ([]int, []float32) {
 		sort.Sort(sort.Reverse(byWeights(jointWeights)))
 
 		// take top 3 weights
-		jointWeights = jointWeights[:settings.AnimationMaxJointWeights]
+		jointWeights = jointWeights[:maxAnimationJointWeights]
 		NormalizeWeights(jointWeights)
 		for _, jw := range jointWeights {
 			j = append(j, jw.JointID)

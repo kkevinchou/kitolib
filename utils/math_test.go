@@ -1,4 +1,4 @@
-package libutils_test
+package utils_test
 
 import (
 	"testing"

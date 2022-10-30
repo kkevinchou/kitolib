@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kkevinchou/kito/kito/settings"
 	"github.com/kkevinchou/kitolib/model"
 )
 
@@ -12,7 +11,7 @@ func TestFillWeightsWithNoChange(t *testing.T) {
 	jointIDs := []int{0, 1, 2, 0}
 	weights := []float32{0.55, 0.25, 0.20, 0}
 
-	newJointIDs, newWeights := model.FillWeights(jointIDs, weights)
+	newJointIDs, newWeights := model.FillWeights(jointIDs, weights, 4)
 	if !IntSliceEqual(jointIDs, newJointIDs) {
 		t.Errorf("expected jointIDs to match %v, %v", jointIDs, newJointIDs)
 	}
@@ -27,7 +26,7 @@ func TestFillWeightsDroppingWeight(t *testing.T) {
 	jointIDs := []int{0, 1, 2, 3, 4}
 	weights := []float32{0.55, 0.25, 0.02, 0.15, 0.05}
 
-	newJointIDs, newWeights := model.FillWeights(jointIDs, weights)
+	newJointIDs, newWeights := model.FillWeights(jointIDs, weights, 4)
 
 	expectedJointIDs := []int{0, 1, 3, 4}
 	if !IntSliceEqual(expectedJointIDs, newJointIDs) {
@@ -44,7 +43,7 @@ func TestFillWeightsWithAddedWeight(t *testing.T) {
 	jointIDs := []int{0, 1}
 	weights := []float32{0.75, 0.25}
 
-	newJointIDs, newWeights := model.FillWeights(jointIDs, weights)
+	newJointIDs, newWeights := model.FillWeights(jointIDs, weights, 4)
 
 	expectedJointIDs := []int{0, 1, 0, 0}
 	if !IntSliceEqual(expectedJointIDs, newJointIDs) {
@@ -56,9 +55,8 @@ func TestFillWeightsWithAddedWeight(t *testing.T) {
 		t.Fatal("expected weights to match")
 	}
 
-	if len(newJointIDs) != settings.AnimationMaxJointWeights {
+	if len(newJointIDs) != 4 {
 		t.Fatal("expected length of joint ids to match settings.AnimationMaxJointWeights")
-
 	}
 }
 func TestNormalizeWeightsHappyPath(t *testing.T) {

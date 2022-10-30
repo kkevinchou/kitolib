@@ -4,8 +4,8 @@ import (
 	"math"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/libutils"
 	"github.com/kkevinchou/kitolib/model"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 type Capsule struct {
@@ -31,7 +31,7 @@ func (c Capsule) Transform(position mgl64.Vec3) Capsule {
 func NewCapsuleFromModel(model *model.Model) Capsule {
 	var vertices []mgl64.Vec3
 	for _, vertex := range model.Vertices() {
-		vertices = append(vertices, libutils.Vec3F32ToF64(vertex.Position))
+		vertices = append(vertices, utils.Vec3F32ToF64(vertex.Position))
 	}
 	return NewCapsuleFromVertices(vertices)
 }

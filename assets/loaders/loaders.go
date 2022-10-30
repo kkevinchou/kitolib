@@ -8,9 +8,9 @@ import (
 	"github.com/kkevinchou/kitolib/assets/loaders/gltextures"
 	"github.com/kkevinchou/kitolib/assets/loaders/gltf"
 	"github.com/kkevinchou/kitolib/font"
-	utils "github.com/kkevinchou/kitolib/libutils"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/textures"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 func LoadTextures(directory string) map[string]*textures.Texture {
