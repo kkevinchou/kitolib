@@ -43,6 +43,7 @@ func (platform *SDLPlatform) PollInput() Input {
 	}
 
 	x, y, mouseState := sdl.GetMouseState()
+	platform.currentFrameInput.MouseInput.Position = mgl64.Vec2{float64(x), float64(y)}
 	platform.imguiIO.SetMousePosition(imgui.Vec2{X: float32(x), Y: float32(y)})
 	for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
 		enabled := mouseState&sdl.Button(button) != 0
