@@ -71,14 +71,6 @@ func (platform *SDLPlatform) PollInput() Input {
 		}
 	}
 
-	// if imgui.IsWindowFocusedV(imgui.FocusedFlagsAnyWindow) {
-	// 	return Input{
-	// 		MouseInput:    MouseInput{},
-	// 		KeyboardInput: KeyboardInput{},
-	// 		Commands:      platform.currentFrameInput.Commands,
-	// 	}
-	// }
-
 	return platform.currentFrameInput
 }
 
@@ -107,6 +99,7 @@ func (platform *SDLPlatform) processEvent(event sdl.Event) {
 		platform.currentFrameInput.MouseInput.MouseMotionEvent.YRel += float64(motionEvent.YRel)
 	case sdl.MOUSEBUTTONDOWN:
 		buttonEvent := event.(*sdl.MouseButtonEvent)
+		platform.currentFrameInput.MouseInput.MouseButtonEvent = MouseButtonEventDown
 		switch buttonEvent.Button {
 		case sdl.BUTTON_RIGHT:
 			platform.lastMousePosition[0] = buttonEvent.X
@@ -115,6 +108,7 @@ func (platform *SDLPlatform) processEvent(event sdl.Event) {
 		}
 	case sdl.MOUSEBUTTONUP:
 		buttonEvent := event.(*sdl.MouseButtonEvent)
+		platform.currentFrameInput.MouseInput.MouseButtonEvent = MouseButtonEventUp
 		switch buttonEvent.Button {
 		case sdl.BUTTON_RIGHT:
 			sdl.SetRelativeMouseMode(false)

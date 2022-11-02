@@ -11,6 +11,12 @@ type MouseMotionEvent struct {
 	YRel float64
 }
 
+type MouseButtonEvent string
+
+var MouseButtonEventNone MouseButtonEvent = ""
+var MouseButtonEventDown MouseButtonEvent = "DOWN"
+var MouseButtonEventUp MouseButtonEvent = "UP"
+
 func (m MouseMotionEvent) IsZero() bool {
 	return m.XRel == 0 && m.YRel == 0
 }
@@ -19,6 +25,7 @@ type MouseInput struct {
 	Position         mgl64.Vec2
 	MouseWheelDelta  int
 	MouseMotionEvent MouseMotionEvent
+	MouseButtonEvent MouseButtonEvent
 	Buttons          [3]bool // left, right, middle
 }
 
