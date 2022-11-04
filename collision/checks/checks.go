@@ -250,3 +250,30 @@ func PointInAABB(point mgl64.Vec3, boundingBox *collider.BoundingBox) bool {
 	}
 	return true
 }
+
+// ClosestPointsInfiniteLines finds the closest point between two infinite lines defined by (p1, q1) , (p2, q2)
+// the boolean return value signals whether the two lines are non-parallel
+// Real Time Collision Detection - page 147
+func ClosestPointsInfiniteLines(p1, q1, p2, q2 mgl64.Vec3) (mgl64.Vec3, mgl64.Vec3, bool) {
+	r := p1.Sub(p2)
+	d1 := q1.Sub(p1)
+	d2 := q2.Sub(p2)
+	a := d1.Dot(d1)
+	b := d1.Dot(d2)
+	c := d1.Dot(r)
+	e := d2.Dot(d2)
+	f := d2.Dot(r)
+
+	d := a*e - (b * b)
+	// two lines are parallel
+	if d == 0 {
+		return mgl64.Vec3{}, mgl64.Vec3{}, false
+	}
+
+	s := (b*f - c*e) / d
+	t := (a*f - b*c) / d
+
+	l1 := p1.Add(q1.Sub(p1).Mul(s))
+	l2 := p2.Add(q2.Sub(p2).Mul(t))
+	return l1, l2, true
+}

@@ -197,3 +197,19 @@ func TestDot(t *testing.T) {
 	v2 := mgl64.Vec3{100, 0, 0}
 	fmt.Println(v1.Dot(v2) / v2.Len())
 }
+
+func TestParallelInfiniteLines(t *testing.T) {
+	p1 := mgl64.Vec3{0, 1, 0}
+	q1 := mgl64.Vec3{1, 1, 0}
+	p2 := mgl64.Vec3{0, 0, 0}
+	q2 := mgl64.Vec3{0, 0, -1}
+
+	a, b, nonParallel := checks.ClosestPointsInfiniteLines(p1, q1, p2, q2)
+	if !nonParallel {
+		t.Error("lines should not be parallel")
+	}
+
+	if a.Sub(b).Len() != 1 {
+		t.Errorf("unexpected vector length of %f", a.Sub(b).Len())
+	}
+}
