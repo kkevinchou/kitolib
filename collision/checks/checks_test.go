@@ -213,3 +213,54 @@ func TestParallelInfiniteLines(t *testing.T) {
 		t.Errorf("unexpected vector length of %f", a.Sub(b).Len())
 	}
 }
+
+func TestParallelInfiniteLineVSLinePointingAway(t *testing.T) {
+	p1 := mgl64.Vec3{0, 0, 0}
+	q1 := mgl64.Vec3{1, 0, 0}
+	p2 := mgl64.Vec3{0, 0, 99}
+	q2 := mgl64.Vec3{0, 0, 100}
+
+	_, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(p1, q1, p2, q2)
+	if !nonParallel {
+		t.Error("lines should not be parallel")
+	}
+
+	expectedPoint := mgl64.Vec3{0, 0, 99}
+	if !b.ApproxEqual(expectedPoint) {
+		t.Errorf("expected %v but instead got %v", expectedPoint, b)
+	}
+}
+
+func TestParallelInfiniteLineVSLinePointingTowards(t *testing.T) {
+	p1 := mgl64.Vec3{0, 0, 0}
+	q1 := mgl64.Vec3{1, 0, 0}
+	p2 := mgl64.Vec3{0, 0, 100}
+	q2 := mgl64.Vec3{0, 0, 99}
+
+	_, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(p1, q1, p2, q2)
+	if !nonParallel {
+		t.Error("lines should not be parallel")
+	}
+
+	expectedPoint := mgl64.Vec3{0, 0, 99}
+	if !b.ApproxEqual(expectedPoint) {
+		t.Errorf("expected %v but instead got %v", expectedPoint, b)
+	}
+}
+
+func TestParallelInfiniteLineVSLinePointingOverlap(t *testing.T) {
+	p1 := mgl64.Vec3{0, 0, 0}
+	q1 := mgl64.Vec3{1, 0, 0}
+	p2 := mgl64.Vec3{0, 0, 100}
+	q2 := mgl64.Vec3{0, 0, -100}
+
+	_, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(p1, q1, p2, q2)
+	if !nonParallel {
+		t.Error("lines should not be parallel")
+	}
+
+	expectedPoint := mgl64.Vec3{0, 0, 0}
+	if !b.ApproxEqual(expectedPoint) {
+		t.Errorf("expected %v but instead got %v", expectedPoint, b)
+	}
+}

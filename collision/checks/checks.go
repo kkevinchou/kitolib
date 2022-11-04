@@ -251,10 +251,21 @@ func PointInAABB(point mgl64.Vec3, boundingBox *collider.BoundingBox) bool {
 	return true
 }
 
-// ClosestPointsInfiniteLines finds the closest point between two infinite lines defined by (p1, q1) , (p2, q2)
+func ClosestPointsInfiniteLines(p1, q1, p2, q2 mgl64.Vec3) (mgl64.Vec3, mgl64.Vec3, bool) {
+	s, t, nonParallel := closestPointsInfiniteLinesMathTest(p1, q1, p2, q2)
+	if !nonParallel {
+		return mgl64.Vec3{}, mgl64.Vec3{}, nonParallel
+	}
+
+	l1 := p1.Add(q1.Sub(p1).Mul(s))
+	l2 := p2.Add(q2.Sub(p2).Mul(t))
+	return l1, l2, nonParallel
+}
+
+// ClosestPointsInfiniteLines finds the closest point between two infinite lines defined by (p1, q1), (p2, q2)
 // the boolean return value signals whether the two lines are non-parallel
 // Real Time Collision Detection - page 147
-func ClosestPointsInfiniteLines(p1, q1, p2, q2 mgl64.Vec3) (mgl64.Vec3, mgl64.Vec3, bool) {
+func closestPointsInfiniteLinesMathTest(p1, q1, p2, q2 mgl64.Vec3) (float64, float64, bool) {
 	r := p1.Sub(p2)
 	d1 := q1.Sub(p1)
 	d2 := q2.Sub(p2)
@@ -267,13 +278,34 @@ func ClosestPointsInfiniteLines(p1, q1, p2, q2 mgl64.Vec3) (mgl64.Vec3, mgl64.Ve
 	d := a*e - (b * b)
 	// two lines are parallel
 	if d == 0 {
-		return mgl64.Vec3{}, mgl64.Vec3{}, false
+		return 0, 0, false
 	}
 
 	s := (b*f - c*e) / d
 	t := (a*f - b*c) / d
 
+	return s, t, true
+}
+
+// ClosestPointsInfiniteLineVSLine finds the closest point between an infinite line and a line segment (p1, q1), (p2, q2)
+// the boolean return value signals whether the two lines are non-parallel
+// Real Time Collision Detection - page 147
+func ClosestPointsInfiniteLineVSLine(p1, q1, p2, q2 mgl64.Vec3) (mgl64.Vec3, mgl64.Vec3, bool) {
+	s, t, nonParallel := closestPointsInfiniteLinesMathTest(p1, q1, p2, q2)
+	if !nonParallel {
+		return mgl64.Vec3{}, mgl64.Vec3{}, nonParallel
+	}
+
 	l1 := p1.Add(q1.Sub(p1).Mul(s))
 	l2 := p2.Add(q2.Sub(p2).Mul(t))
-	return l1, l2, true
+
+	baseLine := q2.Sub(p2)
+	if t > 0 {
+		if t > baseLine.Len() {
+			return l1, q2, nonParallel
+		}
+		return l1, l2, nonParallel
+	}
+
+	return l1, p2, nonParallel
 }
