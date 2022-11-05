@@ -299,9 +299,8 @@ func ClosestPointsInfiniteLineVSLine(p1, q1, p2, q2 mgl64.Vec3) (mgl64.Vec3, mgl
 	l1 := p1.Add(q1.Sub(p1).Mul(s))
 	l2 := p2.Add(q2.Sub(p2).Mul(t))
 
-	baseLine := q2.Sub(p2)
 	if t > 0 {
-		if l2.Len() > baseLine.Len() {
+		if l2.Len() > q2.Len() {
 			return l1, q2, nonParallel
 		}
 		return l1, l2, nonParallel
