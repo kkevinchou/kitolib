@@ -25,7 +25,7 @@ type MouseInput struct {
 	Position         mgl64.Vec2
 	MouseWheelDelta  int
 	MouseMotionEvent MouseMotionEvent
-	MouseButtonEvent MouseButtonEvent
+	MouseButtonEvent [3]MouseButtonEvent
 	Buttons          [3]bool // left, right, middle
 }
 

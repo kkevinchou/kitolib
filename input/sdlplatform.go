@@ -99,9 +99,9 @@ func (platform *SDLPlatform) processEvent(event sdl.Event) {
 		platform.currentFrameInput.MouseInput.MouseMotionEvent.YRel += float64(motionEvent.YRel)
 	case sdl.MOUSEBUTTONDOWN:
 		buttonEvent := event.(*sdl.MouseButtonEvent)
-		platform.currentFrameInput.MouseInput.MouseButtonEvent = MouseButtonEventDown
 		for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
 			if uint32(buttonEvent.Button) == button {
+				platform.currentFrameInput.MouseInput.MouseButtonEvent[i] = MouseButtonEventDown
 				platform.currentFrameInput.MouseInput.Buttons[i] = true
 			}
 		}
@@ -113,7 +113,12 @@ func (platform *SDLPlatform) processEvent(event sdl.Event) {
 		}
 	case sdl.MOUSEBUTTONUP:
 		buttonEvent := event.(*sdl.MouseButtonEvent)
-		platform.currentFrameInput.MouseInput.MouseButtonEvent = MouseButtonEventUp
+		for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
+			if uint32(buttonEvent.Button) == button {
+				platform.currentFrameInput.MouseInput.MouseButtonEvent[i] = MouseButtonEventUp
+				platform.currentFrameInput.MouseInput.Buttons[i] = true
+			}
+		}
 		switch buttonEvent.Button {
 		case sdl.BUTTON_RIGHT:
 			sdl.SetRelativeMouseMode(false)
