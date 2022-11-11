@@ -52,3 +52,7 @@ func (a *AssetManager) GetFont(name string) font.Font {
 	}
 	return a.fonts[name]
 }
+
+func (a *AssetManager) Models() map[string]*modelspec.ModelSpecification {
+	return a.animatedModels
+}
