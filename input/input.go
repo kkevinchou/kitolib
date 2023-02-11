@@ -66,6 +66,11 @@ const (
 	KeyboardKeyRight KeyboardKey = "Right"
 
 	KeyboardKeyLShift KeyboardKey = "Left Shift"
+	KeyboardKeyLCtrl  KeyboardKey = "Left Ctrl"
+	KeyboardKeyLAlt   KeyboardKey = "Left Alt"
+	KeyboardKeyRShift KeyboardKey = "Right Shift"
+	KeyboardKeyRCtrl  KeyboardKey = "Right Ctrl"
+	KeyboardKeyRAlt   KeyboardKey = "Right Alt"
 	KeyboardKeySpace  KeyboardKey = "Space"
 	KeyboardKeyEscape KeyboardKey = "Escape"
 
