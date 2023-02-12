@@ -122,8 +122,65 @@ func rootParentTransforms(document *gltf.Document, parsedJoints *ParsedJoints) m
 	return transform
 }
 
+// collectTimestamps is a preprocessing method that loops through all animation channels
+// and collects the timestamps associated with them
+func collectTimestamps(document *gltf.Document, animation *gltf.Animation, parsedJoints *ParsedJoints) ([]float32, error) {
+	allTimestamps := map[float32]bool{}
+
+	for _, channel := range animation.Channels {
+		nodeID := int(*channel.Target.Node)
+		if _, ok := parsedJoints.NodeIDToJointID[nodeID]; !ok {
+			continue
+		}
+
+		sampler := animation.Samplers[(*channel.Sampler)]
+		inputAccessorIndex := int(sampler.Input)
+
+		inputAccessor := document.Accessors[inputAccessorIndex]
+		if inputAccessor.ComponentType != gltf.ComponentFloat {
+			return nil, fmt.Errorf("unexpected component type %v", inputAccessor.ComponentType)
+		}
+		if inputAccessor.Type != gltf.AccessorScalar {
+			return nil, fmt.Errorf("unexpected accessor type %v", inputAccessor.Type)
+		}
+
+		input, err := modeler.ReadAccessor(document, inputAccessor, nil)
+		if err != nil {
+			panic("WHA")
+		}
+
+		timestamps := input.([]float32)
+		for _, timestamp := range timestamps {
+			allTimestamps[timestamp] = true
+		}
+	}
+
+	var timestamps []float32
+	for ts, _ := range allTimestamps {
+		timestamps = append(timestamps, ts)
+	}
+
+	sort.Slice(timestamps, func(i, j int) bool { return timestamps[i] < timestamps[j] })
+	return timestamps, nil
+}
+
 func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJoints *ParsedJoints) (*modelspec.AnimationSpec, error) {
 	keyFrames := map[float32]*modelspec.KeyFrame{}
+
+	allTimestamps, err := collectTimestamps(document, animation, parsedJoints)
+	if err != nil {
+		return nil, fmt.Errorf("failed to collect timestamps: [%w]", err)
+	}
+
+	for _, timestamp := range allTimestamps {
+		if _, ok := keyFrames[timestamp]; !ok {
+			// hacky way to keep precision on tiny fractional seconds
+			keyFrames[timestamp] = &modelspec.KeyFrame{
+				Start: time.Duration(timestamp*1000) * time.Millisecond,
+				Pose:  map[int]*modelspec.JointTransform{},
+			}
+		}
+	}
 
 	for _, channel := range animation.Channels {
 		nodeID := int(*channel.Target.Node)
@@ -150,16 +207,6 @@ func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJo
 		}
 
 		timestamps := input.([]float32)
-		for _, timestamp := range timestamps {
-			if _, ok := keyFrames[timestamp]; !ok {
-				// hacky way to keep precision on tiny fractional seconds
-				keyFrames[timestamp] = &modelspec.KeyFrame{
-					Start: time.Duration(timestamp*1000) * time.Millisecond,
-					Pose:  map[int]*modelspec.JointTransform{},
-				}
-			}
-		}
-
 		for _, timestamp := range timestamps {
 			if _, ok := keyFrames[timestamp].Pose[jointID]; !ok {
 				keyFrames[timestamp].Pose[jointID] = modelspec.NewDefaultJointTransform()
@@ -218,14 +265,8 @@ func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJo
 		}
 	}
 
-	var timestamps []float32
-	for timestamp := range keyFrames {
-		timestamps = append(timestamps, timestamp)
-	}
-	sort.Slice(timestamps, func(i, j int) bool { return timestamps[i] < timestamps[j] })
-
 	var keyFrameSlice []*modelspec.KeyFrame
-	for _, timestamp := range timestamps {
+	for _, timestamp := range allTimestamps {
 		keyFrameSlice = append(keyFrameSlice, keyFrames[timestamp])
 	}
 
