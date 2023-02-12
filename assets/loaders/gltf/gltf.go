@@ -229,6 +229,12 @@ func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJo
 		keyFrameSlice = append(keyFrameSlice, keyFrames[timestamp])
 	}
 
+	// set animation to start from time zero
+	startTime := keyFrameSlice[0].Start
+	for _, kf := range keyFrameSlice {
+		kf.Start -= startTime
+	}
+
 	return &modelspec.AnimationSpec{
 		Name:      animation.Name,
 		KeyFrames: keyFrameSlice,
