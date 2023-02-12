@@ -112,6 +112,41 @@ func (player *AnimationPlayer) PlayOnce(animationName string, secondaryAnimation
 	}
 }
 
+func (player *AnimationPlayer) UpdateTo(elapsedTime time.Duration) {
+	if player.currentAnimation == nil {
+		return
+	}
+
+	player.elapsedTime = elapsedTime
+	player.update()
+}
+
+func (player *AnimationPlayer) Length() time.Duration {
+	if player.currentAnimation == nil {
+		return 0
+	}
+	return player.currentAnimation.Length
+}
+
+func (player *AnimationPlayer) update() {
+	pose := player.calcPose(player.elapsedTime, player.currentAnimation)
+	if player.blendAnimation != nil {
+		for player.blendAnimationElapsedTime.Milliseconds() > player.blendAnimation.Length.Milliseconds() {
+			player.blendAnimationElapsedTime = time.Duration(player.blendAnimationElapsedTime.Milliseconds()-player.blendAnimation.Length.Milliseconds()) * time.Millisecond
+		}
+		blendTargetPose := player.calcPose(player.blendAnimationElapsedTime, player.blendAnimation)
+		blendProgression := float32(player.blendDurationSoFar.Milliseconds()) / float32(player.blendDuration.Milliseconds())
+		if blendProgression >= 1 {
+			player.currentAnimation = player.blendAnimation
+			player.blendAnimation = nil
+		}
+		pose = interpolatePoses(pose, blendTargetPose, blendProgression)
+	}
+
+	animationTransforms := player.computeAnimationTransforms(pose)
+	player.animationTransforms = animationTransforms
+}
+
 func (player *AnimationPlayer) Update(delta time.Duration) {
 	if player.currentAnimation == nil {
 		return
@@ -132,23 +167,7 @@ func (player *AnimationPlayer) Update(delta time.Duration) {
 			player.PlayAndBlendAnimation(*anim, 250*time.Millisecond)
 		}
 	}
-
-	pose := player.calcPose(player.elapsedTime, player.currentAnimation)
-	if player.blendAnimation != nil {
-		for player.blendAnimationElapsedTime.Milliseconds() > player.blendAnimation.Length.Milliseconds() {
-			player.blendAnimationElapsedTime = time.Duration(player.blendAnimationElapsedTime.Milliseconds()-player.blendAnimation.Length.Milliseconds()) * time.Millisecond
-		}
-		blendTargetPose := player.calcPose(player.blendAnimationElapsedTime, player.blendAnimation)
-		blendProgression := float32(player.blendDurationSoFar.Milliseconds()) / float32(player.blendDuration.Milliseconds())
-		if blendProgression >= 1 {
-			player.currentAnimation = player.blendAnimation
-			player.blendAnimation = nil
-		}
-		pose = interpolatePoses(pose, blendTargetPose, blendProgression)
-	}
-
-	animationTransforms := player.computeAnimationTransforms(pose)
-	player.animationTransforms = animationTransforms
+	player.update()
 }
 
 func (player *AnimationPlayer) calcPose(elapsedTime time.Duration, animation *modelspec.AnimationSpec) map[int]*modelspec.JointTransform {
