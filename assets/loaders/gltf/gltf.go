@@ -122,10 +122,12 @@ func rootParentTransforms(document *gltf.Document, parsedJoints *ParsedJoints) m
 	return transform
 }
 
-// collectTimestamps is a preprocessing method that loops through all animation channels
-// and collects the timestamps associated with them
-func collectTimestamps(document *gltf.Document, animation *gltf.Animation, parsedJoints *ParsedJoints) ([]float32, error) {
+// preprocessAnimations is a preprocessing method that loops through all animation channels
+// and collects the timestamps associated with them as well as joints that are affected
+// by animations
+func preprocessAnimations(document *gltf.Document, animation *gltf.Animation, parsedJoints *ParsedJoints) ([]float32, []int, error) {
 	allTimestamps := map[float32]bool{}
+	jointIDs := map[int]bool{}
 
 	for _, channel := range animation.Channels {
 		nodeID := int(*channel.Target.Node)
@@ -133,15 +135,18 @@ func collectTimestamps(document *gltf.Document, animation *gltf.Animation, parse
 			continue
 		}
 
+		jointID := parsedJoints.NodeIDToJointID[nodeID]
+		jointIDs[jointID] = true
+
 		sampler := animation.Samplers[(*channel.Sampler)]
 		inputAccessorIndex := int(sampler.Input)
 
 		inputAccessor := document.Accessors[inputAccessorIndex]
 		if inputAccessor.ComponentType != gltf.ComponentFloat {
-			return nil, fmt.Errorf("unexpected component type %v", inputAccessor.ComponentType)
+			return nil, nil, fmt.Errorf("unexpected component type %v", inputAccessor.ComponentType)
 		}
 		if inputAccessor.Type != gltf.AccessorScalar {
-			return nil, fmt.Errorf("unexpected accessor type %v", inputAccessor.Type)
+			return nil, nil, fmt.Errorf("unexpected accessor type %v", inputAccessor.Type)
 		}
 
 		input, err := modeler.ReadAccessor(document, inputAccessor, nil)
@@ -160,25 +165,33 @@ func collectTimestamps(document *gltf.Document, animation *gltf.Animation, parse
 		timestamps = append(timestamps, ts)
 	}
 
+	var sliceJointIDs []int
+	for jointID := range jointIDs {
+		sliceJointIDs = append(sliceJointIDs, jointID)
+	}
+
 	sort.Slice(timestamps, func(i, j int) bool { return timestamps[i] < timestamps[j] })
-	return timestamps, nil
+	sort.Ints(sliceJointIDs)
+	return timestamps, sliceJointIDs, nil
 }
 
 func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJoints *ParsedJoints) (*modelspec.AnimationSpec, error) {
 	keyFrames := map[float32]*modelspec.KeyFrame{}
 
-	allTimestamps, err := collectTimestamps(document, animation, parsedJoints)
+	allTimestamps, allJointIDs, err := preprocessAnimations(document, animation, parsedJoints)
 	if err != nil {
 		return nil, fmt.Errorf("failed to collect timestamps: [%w]", err)
 	}
 
+	// initialize our initial keyframe datastructure with empty values
 	for _, timestamp := range allTimestamps {
-		if _, ok := keyFrames[timestamp]; !ok {
-			// hacky way to keep precision on tiny fractional seconds
-			keyFrames[timestamp] = &modelspec.KeyFrame{
-				Start: time.Duration(timestamp*1000) * time.Millisecond,
-				Pose:  map[int]*modelspec.JointTransform{},
-			}
+		// hacky way to keep precision on tiny fractional seconds
+		keyFrames[timestamp] = &modelspec.KeyFrame{
+			Start: time.Duration(timestamp*1000) * time.Millisecond,
+			Pose:  map[int]*modelspec.JointTransform{},
+		}
+		for _, jointID := range allJointIDs {
+			keyFrames[timestamp].Pose[jointID] = modelspec.NewDefaultJointTransform()
 		}
 	}
 
@@ -207,12 +220,17 @@ func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJo
 		}
 
 		timestamps := input.([]float32)
-		for _, timestamp := range timestamps {
-			if _, ok := keyFrames[timestamp].Pose[jointID]; !ok {
-				keyFrames[timestamp].Pose[jointID] = modelspec.NewDefaultJointTransform()
-			}
+		if timestamps[0] != allTimestamps[0] {
+			panic("first timestamp for channel doesn't match first of all collected timestamps")
 		}
 
+		// usage of cursors in the following code is meant to support "optimized" animations
+		// for example, in Blender, if a transform is the same between one frame to the next
+		// it is simply not set. this can be detected when the output count does not match
+		// our collected timestamp count. to handle optimized animations, we simply advance
+		// a cursor that points to the current channel's outputs. if we see a timestamp
+		// that the output cursor is not aware of (since it was optimized away) we copy the
+		// last keyframe's transform
 		outputAccessor := document.Accessors[outputAccessorIndex]
 		if channel.Target.Path == gltf.TRSTranslation {
 			if outputAccessor.ComponentType != gltf.ComponentFloat {
@@ -225,10 +243,22 @@ func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJo
 			if err != nil {
 				panic("WHA")
 			}
+			if outputAccessor.Count <= 0 {
+				panic("accessor with 0 count")
+			}
+
 			f32OutputValues := output.([][3]float32)
-			for i, timestamp := range timestamps {
-				f32Output := f32OutputValues[i]
-				keyFrames[timestamp].Pose[jointID].Translation = mgl32.Vec3{f32Output[0], f32Output[1], f32Output[2]}
+
+			localCursor := 0
+			for i, ts := range allTimestamps {
+				if timestamps[localCursor] != ts {
+					lastTS := allTimestamps[i-1]
+					keyFrames[ts].Pose[jointID].Translation = keyFrames[lastTS].Pose[jointID].Translation
+				} else {
+					f32Output := f32OutputValues[localCursor]
+					keyFrames[ts].Pose[jointID].Translation = mgl32.Vec3{f32Output[0], f32Output[1], f32Output[2]}
+					localCursor++
+				}
 			}
 		} else if channel.Target.Path == gltf.TRSRotation {
 			if outputAccessor.ComponentType != gltf.ComponentFloat {
@@ -241,10 +271,22 @@ func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJo
 			if err != nil {
 				panic("WHA")
 			}
+			if outputAccessor.Count <= 0 {
+				panic("accessor with 0 count")
+			}
+
 			f32OutputValues := output.([][4]float32)
-			for i, timestamp := range timestamps {
-				f32Output := f32OutputValues[i]
-				keyFrames[timestamp].Pose[jointID].Rotation = mgl32.Quat{V: mgl32.Vec3{f32Output[0], f32Output[1], f32Output[2]}, W: f32Output[3]}
+
+			localCursor := 0
+			for i, ts := range allTimestamps {
+				if timestamps[localCursor] != ts {
+					lastTS := allTimestamps[i-1]
+					keyFrames[ts].Pose[jointID].Rotation = keyFrames[lastTS].Pose[jointID].Rotation
+				} else {
+					f32Output := f32OutputValues[localCursor]
+					keyFrames[ts].Pose[jointID].Rotation = mgl32.Quat{V: mgl32.Vec3{f32Output[0], f32Output[1], f32Output[2]}, W: f32Output[3]}
+					localCursor++
+				}
 			}
 		} else if channel.Target.Path == gltf.TRSScale {
 			if outputAccessor.ComponentType != gltf.ComponentFloat {
@@ -257,10 +299,23 @@ func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJo
 			if err != nil {
 				panic("WHA")
 			}
+			if outputAccessor.Count <= 0 {
+				panic("accessor with 0 count")
+			}
+
 			f32OutputValues := output.([][3]float32)
-			for i, timestamp := range timestamps {
-				f32Output := f32OutputValues[i]
-				keyFrames[timestamp].Pose[jointID].Scale = mgl32.Vec3{f32Output[0], f32Output[1], f32Output[2]}
+
+			localCursor := 0
+			for i, ts := range allTimestamps {
+				// local cursor is ahead, backfill the transform
+				if timestamps[localCursor] != ts {
+					lastTS := allTimestamps[i-1]
+					keyFrames[ts].Pose[jointID].Scale = keyFrames[lastTS].Pose[jointID].Scale
+				} else {
+					f32Output := f32OutputValues[localCursor]
+					keyFrames[ts].Pose[jointID].Scale = mgl32.Vec3{f32Output[0], f32Output[1], f32Output[2]}
+					localCursor++
+				}
 			}
 		}
 	}
