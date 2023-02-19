@@ -84,6 +84,13 @@ func ClosestPointOnLineToPoint(a, b, c mgl64.Vec3) mgl64.Vec3 {
 	return a.Add(ab.Mul(t))
 }
 
+func ClosestPointRayVsPoint(origin mgl64.Vec3, dir mgl64.Vec3, point mgl64.Vec3) mgl64.Vec3 {
+	ac := point.Sub(origin)
+	t := ac.Dot(dir) / dir.Dot(dir)
+
+	return origin.Add(dir.Mul(t))
+}
+
 // 6 cases
 // segment PQ and triangle edge AB,
 // segment PQ and triangle edge BC,
