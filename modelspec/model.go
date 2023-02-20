@@ -53,6 +53,8 @@ type ModelSpecification struct {
 
 	RootTransforms mgl32.Mat4
 
+	JointMap map[int]*JointSpec
+
 	// list of textures by name. the index within this slice is
 	// the id for which the modespec references textures
 	Textures []string

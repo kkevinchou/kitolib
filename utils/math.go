@@ -66,6 +66,14 @@ func Mat4F64ToF32(m mgl64.Mat4) mgl32.Mat4 {
 	return result
 }
 
+func Mat4F32ToF64(m mgl32.Mat4) mgl64.Mat4 {
+	var result mgl64.Mat4
+	for i := 0; i < len(m); i++ {
+		result[i] = float64(m[i])
+	}
+	return result
+}
+
 func NormalizeF64(a float64) float64 {
 	if a > 0 {
 		return 1

@@ -19,6 +19,7 @@ type ParsedJoints struct {
 	RootJoint       *modelspec.JointSpec
 	NodeIDToJointID map[int]int
 	JointIDToNodeID map[int]int
+	JointMap        map[int]*modelspec.JointSpec
 }
 
 type TextureCoordStyle int
@@ -79,6 +80,7 @@ func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.ModelSpecif
 	if parsedJoints != nil {
 		modelSpec.RootJoint = parsedJoints.RootJoint
 		rootTransforms = rootParentTransforms(document, parsedJoints)
+		modelSpec.JointMap = parsedJoints.JointMap
 	}
 
 	modelSpec.Animations = parsedAnimations
@@ -403,6 +405,7 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 			ID:                   jointID,
 			BindTransform:        translationMatrix.Mul4(rotationMatrix.Mul4(scaleMatrix)),
 			InverseBindTransform: jms[jointID].inverseBindMatrix,
+			FullBindTransform:    jms[jointID].inverseBindMatrix.Inv(),
 		}
 	}
 
@@ -414,6 +417,7 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 			childJointID := nodeIDToJointID[childNodeID]
 			childIDSet[childJointID] = true
 			joints[jointID].Children = append(joints[jointID].Children, joints[childJointID])
+			joints[childJointID].Parent = joints[jointID]
 		}
 	}
 
@@ -434,6 +438,7 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 		RootJoint:       root,
 		NodeIDToJointID: nodeIDToJointID,
 		JointIDToNodeID: jointIDToNodeID,
+		JointMap:        joints,
 	}
 	return parsedJoints, nil
 }
