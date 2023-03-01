@@ -17,11 +17,13 @@ type ShaderProgram struct {
 const (
 	vertexShaderExtension   = ".vs"
 	fragmentShaderExtension = ".fs"
+	geometryShaderExtension = ".gs"
 )
 
 type ShaderManager struct {
 	vertexShaders   map[string]uint32
 	fragmentShaders map[string]uint32
+	geometryShaders map[string]uint32
 	shaderPrograms  map[string]*ShaderProgram
 }
 
@@ -29,16 +31,20 @@ func NewShaderManager(directory string) *ShaderManager {
 	shaderManager := ShaderManager{
 		vertexShaders:   loadShaders(directory, gl.VERTEX_SHADER, vertexShaderExtension),
 		fragmentShaders: loadShaders(directory, gl.FRAGMENT_SHADER, fragmentShaderExtension),
+		geometryShaders: loadShaders(directory, gl.GEOMETRY_SHADER, geometryShaderExtension),
 		shaderPrograms:  map[string]*ShaderProgram{},
 	}
 
 	return &shaderManager
 }
 
-func (s *ShaderManager) CompileShaderProgram(name, vertexShader, fragmentShader string) error {
+func (s *ShaderManager) CompileShaderProgram(name, vertexShader, fragmentShader, geometryShader string) error {
 	shaderProgram := gl.CreateProgram()
 	gl.AttachShader(shaderProgram, s.vertexShaders[vertexShader])
 	gl.AttachShader(shaderProgram, s.fragmentShaders[fragmentShader])
+	if geometryShader != "" {
+		gl.AttachShader(shaderProgram, s.geometryShaders[geometryShader])
+	}
 	gl.LinkProgram(shaderProgram)
 
 	var status int32

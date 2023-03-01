@@ -49,6 +49,10 @@ func (m *Model) Animations() map[string]*modelspec.AnimationSpec {
 	return m.modelSpec.Animations
 }
 
+func (m *Model) ModelSpecification() *modelspec.ModelSpecification {
+	return m.modelSpec
+}
+
 func (m *Model) Meshes() []*Mesh {
 	return m.meshes
 }

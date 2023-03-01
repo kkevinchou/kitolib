@@ -50,6 +50,14 @@ func Vec3F64ToF32(v mgl64.Vec3) mgl32.Vec3 {
 	return result
 }
 
+func Vec4F64ToF32(v mgl64.Vec4) mgl32.Vec4 {
+	var result mgl32.Vec4
+	for i := 0; i < len(v); i++ {
+		result[i] = float32(v[i])
+	}
+	return result
+}
+
 func Vec4F64To4F32(v mgl64.Vec4) mgl32.Vec4 {
 	return mgl32.Vec4{float32(v.X()), float32(v.Y()), float32(v.Z()), float32(v.W())}
 }
@@ -104,6 +112,26 @@ func Decompose(m mgl32.Mat4) (mgl32.Vec3, mgl32.Quat, mgl32.Vec3) {
 
 	rotation := mgl32.Mat4ToQuat(m)
 	scale := mgl32.Vec3{xScaleCol.Len(), yScaleCol.Len(), zScaleCol.Len()}
+
+	return translation, rotation, scale
+}
+
+func DecomposeF64(m mgl64.Mat4) (mgl64.Vec3, mgl64.Quat, mgl64.Vec3) {
+	translation := m.Col(3).Vec3()
+	m.SetCol(3, mgl64.Vec4{0, 0, 0, 1})
+
+	xScaleCol := m.Col(0).Vec3()
+	newXCol := xScaleCol.Mul(1. / xScaleCol.Len())
+	yScaleCol := m.Col(1).Vec3()
+	newYCol := yScaleCol.Mul(1. / yScaleCol.Len())
+	zScaleCol := m.Col(2).Vec3()
+	newZCol := zScaleCol.Mul(1. / zScaleCol.Len())
+	m.SetCol(0, newXCol.Vec4(0))
+	m.SetCol(1, newYCol.Vec4(0))
+	m.SetCol(2, newZCol.Vec4(0))
+
+	rotation := mgl64.Mat4ToQuat(m)
+	scale := mgl64.Vec3{xScaleCol.Len(), yScaleCol.Len(), zScaleCol.Len()}
 
 	return translation, rotation, scale
 }
