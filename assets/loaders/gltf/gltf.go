@@ -89,6 +89,111 @@ func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.ModelSpecif
 	return modelSpec, nil
 }
 
+func ParseGLTF2(documentPath string, config *ParseConfig) (*modelspec.Collection, error) {
+	var collection modelspec.Collection
+
+	document, err := gltf.Open(documentPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var parsedJoints *ParsedJoints
+	for _, skin := range document.Skins {
+		parsedJoints, err = parseJoints(document, skin)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if parsedJoints != nil {
+		collection.JointMap = parsedJoints.JointMap
+	}
+
+	parsedAnimations := map[string]*modelspec.AnimationSpec{}
+	for _, animation := range document.Animations {
+		parsedAnimation, err := parseAnimation(document, animation, parsedJoints)
+		parsedAnimations[animation.Name] = parsedAnimation
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(parsedAnimations) > 0 {
+		collection.Animations = parsedAnimations
+	}
+
+	for _, texture := range document.Textures {
+		img := document.Images[int(*texture.Source)]
+		if img.MimeType != "image/png" {
+			panic(fmt.Sprintf("image %s has mimetype %s which is not supported for textures", img.Name, img.MimeType))
+		}
+		collection.Textures = append(collection.Textures, img.Name)
+	}
+
+	// indexToMeshes is a map from the mesh index in the gltf document, to our own
+	// mesh ID system. what's important here is that a node only contains one gltf mesh,
+	// but one gltf mesh can generate multiple kitolib meshes, each with their own ID.
+	// consumers of kitolib interact with only our own ID system, and not gltf's
+
+	indexToMeshes := map[int][]int{}
+	meshID := 0
+	for index, mesh := range document.Meshes {
+		mat := mgl32.QuatRotate(mgl32.DegToRad(180), mgl32.Vec3{0, 0, -1}).Mat4()
+		meshSpecs, err := parseMesh2(document, mesh, mat, collection.Textures, config)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+
+		for i := 0; i < len(meshSpecs); i++ {
+			collection.Meshes = append(collection.Meshes, meshSpecs[i])
+			indexToMeshes[index] = append(indexToMeshes[index], meshID)
+			meshID++
+		}
+	}
+
+	for _, docScene := range document.Scenes {
+		scene := &modelspec.Scene{}
+		for _, node := range docScene.Nodes {
+			scene.Nodes = append(scene.Nodes, parseNode(document, node, indexToMeshes, mgl32.Ident4()))
+		}
+		collection.Scenes = append(collection.Scenes, scene)
+	}
+
+	rootTransforms := mgl32.Ident4()
+	if parsedJoints != nil {
+		collection.RootJoint = parsedJoints.RootJoint
+		rootTransforms = rootParentTransforms(document, parsedJoints)
+		_ = rootTransforms
+	}
+
+	return &collection, nil
+}
+
+func parseNode(document *gltf.Document, root uint32, indexToMeshes map[int][]int, parentTransform mgl32.Mat4) *modelspec.Node {
+	docNode := document.Nodes[int(root)]
+
+	node := &modelspec.Node{}
+	if docNode.Mesh != nil {
+		index := int(*docNode.Mesh)
+		node.MeshIDs = append(node.MeshIDs, indexToMeshes[index]...)
+	}
+
+	translation := docNode.Translation
+	rotation := docNode.Rotation
+	scale := docNode.Scale
+
+	translationMatrix := mgl32.Translate3D(translation[0], translation[1], translation[2])
+	rotationMatrix := mgl32.Quat{V: mgl32.Vec3{rotation[0], rotation[1], rotation[2]}, W: rotation[3]}.Mat4()
+	scaleMatrix := mgl32.Scale3D(scale[0], scale[1], scale[2])
+
+	node.Transform = parentTransform.Mul4(translationMatrix).Mul4(rotationMatrix).Mul4(scaleMatrix)
+
+	for _, childNodeID := range docNode.Children {
+		node.Children = append(node.Children, parseNode(document, childNodeID, indexToMeshes, node.Transform))
+	}
+
+	return node
+}
+
 func rootParentTransforms(document *gltf.Document, parsedJoints *ParsedJoints) mgl32.Mat4 {
 	children := map[int][]int{}
 	parents := map[int]*int{}
@@ -443,6 +548,110 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 	return parsedJoints, nil
 }
 
+// parseMesh2 takes a gltf mesh and creates a meshspec for each primitive within the mesh
+// index - the index of the mesh, since meshes can have multiple primitives, we can have
+// mesh model specifications with the same index. this is okay, external applications should
+// not reference this and instead use the mesh id
+func parseMesh2(document *gltf.Document, mesh *gltf.Mesh, parentTransforms mgl32.Mat4, textures []string, config *ParseConfig) ([]*modelspec.MeshSpecification, error) {
+	var meshSpecs []*modelspec.MeshSpecification
+
+	for _, primitive := range mesh.Primitives {
+		meshSpec := &modelspec.MeshSpecification{}
+		acrIndex := *primitive.Indices
+		meshIndices, err := modeler.ReadIndices(document, document.Accessors[int(acrIndex)], nil)
+		if err != nil {
+			return nil, err
+		}
+		meshSpec.VertexIndices = meshIndices
+
+		if primitive.Material != nil {
+			materialIndex := int(*primitive.Material)
+			material := document.Materials[materialIndex]
+			pbr := *material.PBRMetallicRoughness
+			meshSpec.PBRMaterial = &modelspec.PBRMaterial{
+				PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{
+					BaseColorFactor: mgl32.Vec4{pbr.BaseColorFactor[0], pbr.BaseColorFactor[1], pbr.BaseColorFactor[2], pbr.BaseColorFactor[3]},
+					MetalicFactor:   *pbr.MetallicFactor,
+					RoughnessFactor: *pbr.RoughnessFactor,
+				},
+			}
+			if pbr.BaseColorTexture != nil {
+				var intIndex int = int(pbr.BaseColorTexture.Index)
+				meshSpec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureIndex = &intIndex
+				meshSpec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName = textures[intIndex]
+			}
+		}
+
+		for attribute, index := range primitive.Attributes {
+			acr := document.Accessors[int(index)]
+			if meshSpec.UniqueVertices == nil {
+				meshSpec.UniqueVertices = make([]modelspec.Vertex, int(acr.Count))
+			}
+
+			if attribute == gltf.POSITION {
+				positions, err := modeler.ReadPosition(document, acr, nil)
+				if err != nil {
+					return nil, err
+				}
+
+				if len(positions) != len(meshSpec.UniqueVertices) {
+					fmt.Println("dafuq")
+				}
+
+				for i, position := range positions {
+					meshSpec.UniqueVertices[i].Position = position
+				}
+			} else if attribute == gltf.NORMAL {
+				normals, err := modeler.ReadNormal(document, acr, nil)
+				if err != nil {
+					return nil, err
+				}
+				for i, normal := range normals {
+					meshSpec.UniqueVertices[i].Normal = normal
+				}
+			} else if attribute == gltf.TEXCOORD_0 {
+				textureCoords, err := modeler.ReadTextureCoord(document, acr, nil)
+				if err != nil {
+					return nil, err
+				}
+				for i, textureCoord := range textureCoords {
+					if config.TextureCoordStyle == TextureCoordStyleOpenGL {
+						textureCoord[1] = 1 - textureCoord[1]
+					}
+					meshSpec.UniqueVertices[i].Texture = textureCoord
+				}
+			} else if attribute == gltf.JOINTS_0 {
+				jointsSlice, err := modeler.ReadJoints(document, acr, nil)
+				if err != nil {
+					return nil, err
+				}
+				readJointIDs := loosenUint16Array(jointsSlice)
+				for i, jointIDs := range readJointIDs {
+					meshSpec.UniqueVertices[i].JointIDs = jointIDs
+				}
+			} else if attribute == gltf.WEIGHTS_0 {
+				weights, err := modeler.ReadWeights(document, acr, nil)
+				if err != nil {
+					return nil, err
+				}
+				readJointWeights := loosenFloat32Array4(weights)
+				for i, jointWeights := range readJointWeights {
+					meshSpec.UniqueVertices[i].JointWeights = jointWeights
+				}
+			} else {
+				fmt.Printf("[%s] unhandled attribute %s\n", mesh.Name, attribute)
+			}
+		}
+
+		for _, index := range meshSpec.VertexIndices {
+			meshSpec.Vertices = append(meshSpec.Vertices, meshSpec.UniqueVertices[index])
+		}
+		meshSpecs = append(meshSpecs, meshSpec)
+	}
+
+	return meshSpecs, nil
+}
+
 func parseMesh(document *gltf.Document, mesh *gltf.Mesh, parentTransforms mgl32.Mat4, textures []string, config *ParseConfig) (*modelspec.MeshSpecification, error) {
 	meshSpec := &modelspec.MeshSpecification{}
 
@@ -538,7 +747,7 @@ func parseMesh(document *gltf.Document, mesh *gltf.Mesh, parentTransforms mgl32.
 			meshChunkSpec.Vertices = append(meshChunkSpec.Vertices, meshChunkSpec.UniqueVertices[index])
 		}
 
-		meshSpec.MeshChunks = append(meshSpec.MeshChunks, meshChunkSpec)
+		// meshSpec.MeshChunks = append(meshSpec.MeshChunks, meshChunkSpec)
 	}
 	return meshSpec, nil
 }

@@ -9,6 +9,9 @@ import (
 )
 
 var testFile string = "../../../_assets/gltf/alpha.gltf"
+var testFile2 string = "../../../_assets/gltf/demo_scene_west.gltf"
+var testFile3 string = "../../../_assets/gltf/vehicle.gltf"
+var testFile4 string = "../../../_assets/gltf/lootbox.gltf"
 
 // bug hint: when a joint is defined but has no poses our
 // animation loading code freaks out. i removed the joint animatiosn from the legs
@@ -22,6 +25,28 @@ func TestBasic(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+}
+
+func TestBasic2(t *testing.T) {
+	d, err := gltf.ParseGLTF2(testFile4, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+	// c := model.CreateContext(d)
+	// _ = c
+	// _ = model.NewModelFromCollection(c, &model.ModelConfig{MaxAnimationJointWeights: 4})
+	if err != nil {
+		t.Error(err)
+	}
+	_ = d
+}
+
+func TestBasic3(t *testing.T) {
+	d, err := gltf.ParseGLTF2(testFile2, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+	// c := model.CreateContext(d)
+	// _ = c
+	// _ = model.NewModelFromCollection(c, &model.ModelConfig{MaxAnimationJointWeights: 4})
+	if err != nil {
+		t.Error(err)
+	}
+	_ = d
 }
 
 // our current animation system only works on models with keyframes that include all joints (even if redundant).

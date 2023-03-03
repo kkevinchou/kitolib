@@ -1,6 +1,8 @@
 package modelspec
 
-import "github.com/go-gl/mathgl/mgl32"
+import (
+	"github.com/go-gl/mathgl/mgl32"
+)
 
 type PBRMetallicRoughness struct {
 	BaseColorTextureIndex *int
@@ -35,8 +37,18 @@ type MeshChunkSpecification struct {
 	// PBR
 	PBRMaterial *PBRMaterial
 }
+
 type MeshSpecification struct {
-	MeshChunks []*MeshChunkSpecification
+	VertexIndices []uint32
+	// the unique vertices in the mesh chunk. VertexIndices details
+	// how the unique vertices are arranged to construct the mesh
+	UniqueVertices []Vertex
+
+	// the ordered vertices where each triplet forms a triangle for the mesh
+	Vertices []Vertex
+
+	// PBR
+	PBRMaterial *PBRMaterial
 }
 
 // ModelSpecification is the output of any parsed model files (e.g. from Blender, Maya, etc)
@@ -58,4 +70,77 @@ type ModelSpecification struct {
 	// list of textures by name. the index within this slice is
 	// the id for which the modespec references textures
 	Textures []string
+}
+
+// SceneSpecification
+// A scene contains a bunch of meshes that can be referenced by different individual objects
+type Scene struct {
+	// how do i join a node to its mesh and textures and animation?
+	Nodes []*Node
+}
+
+type Node struct {
+	MeshIDs   []int
+	Transform mgl32.Mat4
+	Children  []*Node
+}
+
+type Collection struct {
+	Scenes   []*Scene
+	Meshes   []*MeshSpecification
+	Textures []string
+
+	JointMap   map[int]*JointSpec
+	Animations map[string]*AnimationSpec
+
+	// not sure where to put this
+	RootJoint *JointSpec
+}
+
+func NormalizeWeights(jointWeights []JointWeight) {
+	var totalWeight float32
+	for _, jw := range jointWeights {
+		totalWeight += jw.Weight
+	}
+
+	for i := range jointWeights {
+		jointWeights[i].Weight /= totalWeight
+	}
+}
+
+type byWeights []JointWeight
+
+type JointWeight struct {
+	JointID int
+	Weight  float32
+}
+
+func (s byWeights) Len() int {
+	return len(s)
+}
+func (s byWeights) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+func (s byWeights) Less(i, j int) bool {
+	return s[i].Weight < s[j].Weight
+}
+
+// careful with this method. i believe this assumes that the local bind pose is in a tpose but this isn't always the case.
+// in collada files it's more reliable to read the inv bind matrix from the data file itself rather than try to calculate it
+// func calculateInverseBindTransform(joint *modelspec.JointSpec, parentBindTransform mgl32.Mat4) {
+// 	bindTransform := parentBindTransform.Mul4(joint.BindTransform) // model-space relative to the origin
+// 	joint.InverseBindTransform = bindTransform.Inv()
+// 	for _, child := range joint.Children {
+// 		calculateInverseBindTransform(child, bindTransform)
+// 	}
+// }
+
+func (m *MeshSpecification) TextureName() string {
+	if m.PBRMaterial == nil {
+		return ""
+	}
+	if m.PBRMaterial.PBRMetallicRoughness == nil {
+		return ""
+	}
+	return m.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName
 }

@@ -2,8 +2,6 @@ package collider
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/model"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
 type Mesh interface {
@@ -45,23 +43,21 @@ func (t TriMesh) Transform(transform mgl64.Mat4) TriMesh {
 	return newTriMesh
 }
 
-func NewTriMesh(model *model.Model) TriMesh {
-	triMesh := TriMesh{}
-	for _, mesh := range model.Meshes() {
-		for _, meshChunk := range mesh.MeshChunks() {
-			vertices := meshChunk.Vertices()
-			for i := 0; i < len(vertices); i += 3 {
-				points := []mgl64.Vec3{
-					utils.Vec3F32ToF64(vertices[i].Position),
-					utils.Vec3F32ToF64(vertices[i+1].Position),
-					utils.Vec3F32ToF64(vertices[i+2].Position),
-				}
-				triMesh.Triangles = append(triMesh.Triangles, NewTriangle(points))
-			}
-		}
-	}
-	return triMesh
-}
+// func NewTriMesh(model *model.Model) TriMesh {
+// 	triMesh := TriMesh{}
+// 	for _, mesh := range model.Meshes() {
+// 		vertices := mesh.Vertices
+// 		for i := 0; i < len(vertices); i += 3 {
+// 			points := []mgl64.Vec3{
+// 				utils.Vec3F32ToF64(vertices[i].Position),
+// 				utils.Vec3F32ToF64(vertices[i+1].Position),
+// 				utils.Vec3F32ToF64(vertices[i+2].Position),
+// 			}
+// 			triMesh.Triangles = append(triMesh.Triangles, NewTriangle(points))
+// 		}
+// 	}
+// 	return triMesh
+// }
 
 func NewBoxTriMesh(w, l, h float64) TriMesh {
 	halfW := w / 2

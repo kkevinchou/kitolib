@@ -69,6 +69,40 @@ func LoadModels(directory string) map[string]*modelspec.ModelSpecification {
 	return animationMap
 }
 
+func LoadModels2(directory string) map[string]*modelspec.Collection {
+	var subDirectories []string = []string{"gltf"}
+
+	extensions := map[string]any{
+		".gltf": nil,
+	}
+
+	collections := map[string]*modelspec.Collection{}
+	fileMetaData := utils.GetFileMetaData(directory, subDirectories, extensions)
+
+	for _, metaData := range fileMetaData {
+		if strings.HasPrefix(metaData.Name, "_") {
+			continue
+		}
+
+		if metaData.Extension == ".gltf" {
+			// if metaData.Name != "vehicle" && metaData.Name != "demo_scene_west" {
+			// 	continue
+			// }
+			collection, err := gltf.ParseGLTF2(metaData.Path, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+			if err != nil {
+				fmt.Println("failed to parse gltf for", metaData.Path, ", error:", err)
+				continue
+			}
+			collections[metaData.Name] = collection
+		} else {
+			panic(fmt.Sprintf("wtf unexpected extension %s", metaData.Extension))
+		}
+
+	}
+
+	return collections
+}
+
 func LoadFonts(directory string) map[string]font.Font {
 	var subDirectories []string = []string{"fonts"}
 

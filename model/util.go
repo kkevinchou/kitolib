@@ -2,8 +2,6 @@ package model
 
 import (
 	"sort"
-
-	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 // if we exceed settings.AnimationMaxJointWeights, drop the weakest weights and normalize
@@ -76,11 +74,3 @@ func (s byWeights) Less(i, j int) bool {
 // 		calculateInverseBindTransform(child, bindTransform)
 // 	}
 // }
-
-func getJointMap(joint *modelspec.JointSpec, jointMap map[int]*modelspec.JointSpec) map[int]*modelspec.JointSpec {
-	jointMap[joint.ID] = joint
-	for _, c := range joint.Children {
-		getJointMap(c, jointMap)
-	}
-	return jointMap
-}
