@@ -25,9 +25,8 @@ func NewAssetManager(directory string, loadVisualAssets bool) *AssetManager {
 	}
 
 	assetManager := AssetManager{
-		textures: loadedTextures,
-		// animatedModels: loaders.LoadModels(directory),
-		collections: loaders.LoadModels2(directory),
+		textures:    loadedTextures,
+		collections: loaders.LoadModels(directory),
 		fonts:       loadedFonts,
 	}
 

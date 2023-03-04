@@ -34,42 +34,7 @@ func LoadTextures(directory string) map[string]*textures.Texture {
 	return textureMap
 }
 
-func LoadModels(directory string) map[string]*modelspec.ModelSpecification {
-	var subDirectories []string = []string{"gltf"}
-
-	extensions := map[string]any{
-		".gltf": nil,
-	}
-
-	animationMap := map[string]*modelspec.ModelSpecification{}
-	fileMetaData := utils.GetFileMetaData(directory, subDirectories, extensions)
-
-	var err error
-	var modelSpec *modelspec.ModelSpecification
-
-	for _, metaData := range fileMetaData {
-		if strings.HasPrefix(metaData.Name, "_") {
-			continue
-		}
-
-		if metaData.Extension == ".gltf" {
-			modelSpec, err = gltf.ParseGLTF(metaData.Path, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
-			if err != nil {
-				fmt.Println("failed to parse gltf for", metaData.Path, ", error:", err)
-				continue
-			}
-		} else {
-			panic(fmt.Sprintf("wtf unexpected extension %s", metaData.Extension))
-		}
-
-		animationMap[metaData.Name] = modelSpec
-
-	}
-
-	return animationMap
-}
-
-func LoadModels2(directory string) map[string]*modelspec.Collection {
+func LoadModels(directory string) map[string]*modelspec.Collection {
 	var subDirectories []string = []string{"gltf"}
 
 	extensions := map[string]any{
@@ -88,7 +53,7 @@ func LoadModels2(directory string) map[string]*modelspec.Collection {
 			// if metaData.Name != "vehicle" && metaData.Name != "demo_scene_west" {
 			// 	continue
 			// }
-			collection, err := gltf.ParseGLTF2(metaData.Path, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+			collection, err := gltf.ParseGLTF(metaData.Path, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 			if err != nil {
 				fmt.Println("failed to parse gltf for", metaData.Path, ", error:", err)
 				continue

@@ -32,64 +32,7 @@ type ParseConfig struct {
 	TextureCoordStyle TextureCoordStyle
 }
 
-func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.ModelSpecification, error) {
-	document, err := gltf.Open(documentPath)
-	if err != nil {
-		return nil, err
-	}
-
-	var parsedJoints *ParsedJoints
-	for _, skin := range document.Skins {
-		parsedJoints, err = parseJoints(document, skin)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	parsedAnimations := map[string]*modelspec.AnimationSpec{}
-	for _, animation := range document.Animations {
-		parsedAnimation, err := parseAnimation(document, animation, parsedJoints)
-		parsedAnimations[animation.Name] = parsedAnimation
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	modelSpec := &modelspec.ModelSpecification{}
-
-	for _, texture := range document.Textures {
-		img := document.Images[int(*texture.Source)]
-		if img.MimeType != "image/png" {
-			panic(fmt.Sprintf("image %s has mimetype %s which is not supported for textures", img.Name, img.MimeType))
-		}
-		modelSpec.Textures = append(modelSpec.Textures, img.Name)
-	}
-
-	for _, mesh := range document.Meshes {
-		mat := mgl32.QuatRotate(mgl32.DegToRad(180), mgl32.Vec3{0, 0, -1}).Mat4()
-		meshSpec, err := parseMesh(document, mesh, mat, modelSpec.Textures, config)
-		if err != nil {
-			fmt.Println(err)
-			return nil, err
-		}
-
-		modelSpec.Meshes = append(modelSpec.Meshes, meshSpec)
-	}
-
-	rootTransforms := mgl32.Ident4()
-	if parsedJoints != nil {
-		modelSpec.RootJoint = parsedJoints.RootJoint
-		rootTransforms = rootParentTransforms(document, parsedJoints)
-		modelSpec.JointMap = parsedJoints.JointMap
-	}
-
-	modelSpec.Animations = parsedAnimations
-	modelSpec.RootTransforms = rootTransforms
-
-	return modelSpec, nil
-}
-
-func ParseGLTF2(documentPath string, config *ParseConfig) (*modelspec.Collection, error) {
+func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.Collection, error) {
 	var collection modelspec.Collection
 
 	document, err := gltf.Open(documentPath)
@@ -137,7 +80,7 @@ func ParseGLTF2(documentPath string, config *ParseConfig) (*modelspec.Collection
 	meshID := 0
 	for index, mesh := range document.Meshes {
 		mat := mgl32.QuatRotate(mgl32.DegToRad(180), mgl32.Vec3{0, 0, -1}).Mat4()
-		meshSpecs, err := parseMesh2(document, mesh, mat, collection.Textures, config)
+		meshSpecs, err := parseMesh(document, mesh, mat, collection.Textures, config)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
@@ -548,11 +491,11 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 	return parsedJoints, nil
 }
 
-// parseMesh2 takes a gltf mesh and creates a meshspec for each primitive within the mesh
+// parseMesh takes a gltf mesh and creates a meshspec for each primitive within the mesh
 // index - the index of the mesh, since meshes can have multiple primitives, we can have
 // mesh model specifications with the same index. this is okay, external applications should
 // not reference this and instead use the mesh id
-func parseMesh2(document *gltf.Document, mesh *gltf.Mesh, parentTransforms mgl32.Mat4, textures []string, config *ParseConfig) ([]*modelspec.MeshSpecification, error) {
+func parseMesh(document *gltf.Document, mesh *gltf.Mesh, parentTransforms mgl32.Mat4, textures []string, config *ParseConfig) ([]*modelspec.MeshSpecification, error) {
 	var meshSpecs []*modelspec.MeshSpecification
 
 	for _, primitive := range mesh.Primitives {
@@ -650,106 +593,6 @@ func parseMesh2(document *gltf.Document, mesh *gltf.Mesh, parentTransforms mgl32
 	}
 
 	return meshSpecs, nil
-}
-
-func parseMesh(document *gltf.Document, mesh *gltf.Mesh, parentTransforms mgl32.Mat4, textures []string, config *ParseConfig) (*modelspec.MeshSpecification, error) {
-	meshSpec := &modelspec.MeshSpecification{}
-
-	for _, primitive := range mesh.Primitives {
-		meshChunkSpec := &modelspec.MeshChunkSpecification{}
-		acrIndex := *primitive.Indices
-		meshIndices, err := modeler.ReadIndices(document, document.Accessors[int(acrIndex)], nil)
-		if err != nil {
-			return nil, err
-		}
-		meshChunkSpec.VertexIndices = meshIndices
-
-		if primitive.Material != nil {
-			materialIndex := int(*primitive.Material)
-			material := document.Materials[materialIndex]
-			pbr := *material.PBRMetallicRoughness
-			meshChunkSpec.PBRMaterial = &modelspec.PBRMaterial{
-				PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{
-					BaseColorFactor: mgl32.Vec4{pbr.BaseColorFactor[0], pbr.BaseColorFactor[1], pbr.BaseColorFactor[2], pbr.BaseColorFactor[3]},
-					MetalicFactor:   *pbr.MetallicFactor,
-					RoughnessFactor: *pbr.RoughnessFactor,
-				},
-			}
-			if pbr.BaseColorTexture != nil {
-				var intIndex int = int(pbr.BaseColorTexture.Index)
-				meshChunkSpec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureIndex = &intIndex
-				meshChunkSpec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName = textures[intIndex]
-			}
-		}
-
-		for attribute, index := range primitive.Attributes {
-			acr := document.Accessors[int(index)]
-			if meshChunkSpec.UniqueVertices == nil {
-				meshChunkSpec.UniqueVertices = make([]modelspec.Vertex, int(acr.Count))
-			}
-
-			if attribute == gltf.POSITION {
-				positions, err := modeler.ReadPosition(document, acr, nil)
-				if err != nil {
-					return nil, err
-				}
-
-				if len(positions) != len(meshChunkSpec.UniqueVertices) {
-					fmt.Println("dafuq")
-				}
-
-				for i, position := range positions {
-					meshChunkSpec.UniqueVertices[i].Position = position
-				}
-			} else if attribute == gltf.NORMAL {
-				normals, err := modeler.ReadNormal(document, acr, nil)
-				if err != nil {
-					return nil, err
-				}
-				for i, normal := range normals {
-					meshChunkSpec.UniqueVertices[i].Normal = normal
-				}
-			} else if attribute == gltf.TEXCOORD_0 {
-				textureCoords, err := modeler.ReadTextureCoord(document, acr, nil)
-				if err != nil {
-					return nil, err
-				}
-				for i, textureCoord := range textureCoords {
-					if config.TextureCoordStyle == TextureCoordStyleOpenGL {
-						textureCoord[1] = 1 - textureCoord[1]
-					}
-					meshChunkSpec.UniqueVertices[i].Texture = textureCoord
-				}
-			} else if attribute == gltf.JOINTS_0 {
-				jointsSlice, err := modeler.ReadJoints(document, acr, nil)
-				if err != nil {
-					return nil, err
-				}
-				readJointIDs := loosenUint16Array(jointsSlice)
-				for i, jointIDs := range readJointIDs {
-					meshChunkSpec.UniqueVertices[i].JointIDs = jointIDs
-				}
-			} else if attribute == gltf.WEIGHTS_0 {
-				weights, err := modeler.ReadWeights(document, acr, nil)
-				if err != nil {
-					return nil, err
-				}
-				readJointWeights := loosenFloat32Array4(weights)
-				for i, jointWeights := range readJointWeights {
-					meshChunkSpec.UniqueVertices[i].JointWeights = jointWeights
-				}
-			} else {
-				fmt.Printf("[%s] unhandled attribute %s\n", mesh.Name, attribute)
-			}
-		}
-
-		for _, index := range meshChunkSpec.VertexIndices {
-			meshChunkSpec.Vertices = append(meshChunkSpec.Vertices, meshChunkSpec.UniqueVertices[index])
-		}
-
-		// meshSpec.MeshChunks = append(meshSpec.MeshChunks, meshChunkSpec)
-	}
-	return meshSpec, nil
 }
 
 func loosenFloat32Array4(floats [][4]float32) [][]float32 {
