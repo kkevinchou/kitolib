@@ -5,11 +5,12 @@ import (
 )
 
 type PBRMetallicRoughness struct {
-	BaseColorTextureIndex *int
-	BaseColorTextureName  string
-	BaseColorFactor       mgl32.Vec4
-	MetalicFactor         float32
-	RoughnessFactor       float32
+	BaseColorTextureIndex       *int
+	BaseColorTextureName        string
+	BaseColorFactor             mgl32.Vec4
+	MetalicFactor               float32
+	RoughnessFactor             float32
+	BaseColorTextureCoordsIndex int
 }
 
 type PBRMaterial struct {
@@ -17,9 +18,10 @@ type PBRMaterial struct {
 }
 
 type Vertex struct {
-	Position mgl32.Vec3
-	Normal   mgl32.Vec3
-	Texture  mgl32.Vec2
+	Position       mgl32.Vec3
+	Normal         mgl32.Vec3
+	Texture0Coords mgl32.Vec2
+	Texture1Coords mgl32.Vec2
 
 	JointIDs     []int
 	JointWeights []float32

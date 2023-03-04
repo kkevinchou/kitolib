@@ -144,14 +144,16 @@ func (c *CollectionContext) initialize(modelConfig ModelConfig) {
 		for _, vertex := range m.UniqueVertices {
 			position := vertex.Position
 			normal := vertex.Normal
-			texture := vertex.Texture
+			texture0Coords := vertex.Texture0Coords
+			texture1Coords := vertex.Texture1Coords
 			jointIDs := vertex.JointIDs
 			jointWeights := vertex.JointWeights
 
 			vertexAttributes = append(vertexAttributes,
 				position.X(), position.Y(), position.Z(),
 				normal.X(), normal.Y(), normal.Z(),
-				texture.X(), texture.Y(),
+				texture0Coords.X(), texture0Coords.Y(),
+				texture1Coords.X(), texture1Coords.Y(),
 			)
 
 			ids, weights := fillWeights(jointIDs, jointWeights, modelConfig.MaxAnimationJointWeights)
@@ -163,36 +165,52 @@ func (c *CollectionContext) initialize(modelConfig ModelConfig) {
 
 		totalAttributeSize := len(vertexAttributes) / len(m.UniqueVertices)
 
-		// lay out the position, normal, texture coords in a VBO
+		// lay out the position, normal, texture (index 0 and 1) coords in a VBO
 		var vbo uint32
 		gl.GenBuffers(1, &vbo)
 		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 		gl.BufferData(gl.ARRAY_BUFFER, len(vertexAttributes)*4, gl.Ptr(vertexAttributes), gl.STATIC_DRAW)
 
+		ptrOffset := 0
+		floatSize := 4
+
+		// position
 		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(totalAttributeSize)*4, nil)
 		gl.EnableVertexAttribArray(0)
 
-		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, int32(totalAttributeSize)*4, gl.PtrOffset(3*4))
+		ptrOffset += 3
+
+		// normal
+		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, int32(totalAttributeSize)*4, gl.PtrOffset(ptrOffset*floatSize))
 		gl.EnableVertexAttribArray(1)
 
-		gl.VertexAttribPointer(2, 2, gl.FLOAT, false, int32(totalAttributeSize)*4, gl.PtrOffset(6*4))
+		ptrOffset += 3
+
+		// texture coords 0
+		gl.VertexAttribPointer(2, 2, gl.FLOAT, false, int32(totalAttributeSize)*4, gl.PtrOffset(ptrOffset*floatSize))
 		gl.EnableVertexAttribArray(2)
+
+		ptrOffset += 2
+
+		// texture coords 1
+		gl.VertexAttribPointer(3, 2, gl.FLOAT, false, int32(totalAttributeSize)*4, gl.PtrOffset(ptrOffset*floatSize))
+		gl.EnableVertexAttribArray(3)
 
 		// lay out the joint IDs in a VBO
 		var vboJointIDs uint32
 		gl.GenBuffers(1, &vboJointIDs)
 		gl.BindBuffer(gl.ARRAY_BUFFER, vboJointIDs)
 		gl.BufferData(gl.ARRAY_BUFFER, len(jointIDsAttribute)*4, gl.Ptr(jointIDsAttribute), gl.STATIC_DRAW)
-		gl.VertexAttribIPointer(3, int32(modelConfig.MaxAnimationJointWeights), gl.INT, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
-		gl.EnableVertexAttribArray(3)
+		gl.VertexAttribIPointer(4, int32(modelConfig.MaxAnimationJointWeights), gl.INT, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
+		gl.EnableVertexAttribArray(4)
 
 		// lay out the joint weights in a VBO
 		var vboJointWeights uint32
 		gl.GenBuffers(1, &vboJointWeights)
 		gl.BindBuffer(gl.ARRAY_BUFFER, vboJointWeights)
 		gl.BufferData(gl.ARRAY_BUFFER, len(jointWeightsAttribute)*4, gl.Ptr(jointWeightsAttribute), gl.STATIC_DRAW)
-		gl.VertexAttribPointer(4, int32(modelConfig.MaxAnimationJointWeights), gl.FLOAT, false, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
-		gl.EnableVertexAttribArray(4)
+		gl.VertexAttribPointer(5, int32(modelConfig.MaxAnimationJointWeights), gl.FLOAT, false, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
+		gl.EnableVertexAttribArray(5)
 
 		// set up the EBO, each triplet of indices point to three vertices
 		// that form a triangle.

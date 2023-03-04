@@ -526,6 +526,7 @@ func parseMesh(document *gltf.Document, mesh *gltf.Mesh, parentTransforms mgl32.
 				var intIndex int = int(pbr.BaseColorTexture.Index)
 				meshSpec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureIndex = &intIndex
 				meshSpec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName = textures[intIndex]
+				meshSpec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureCoordsIndex = int(pbr.BaseColorTexture.TexCoord)
 			}
 		}
 
@@ -565,7 +566,18 @@ func parseMesh(document *gltf.Document, mesh *gltf.Mesh, parentTransforms mgl32.
 					if config.TextureCoordStyle == TextureCoordStyleOpenGL {
 						textureCoord[1] = 1 - textureCoord[1]
 					}
-					meshSpec.UniqueVertices[i].Texture = textureCoord
+					meshSpec.UniqueVertices[i].Texture0Coords = textureCoord
+				}
+			} else if attribute == gltf.TEXCOORD_1 {
+				textureCoords, err := modeler.ReadTextureCoord(document, acr, nil)
+				if err != nil {
+					return nil, err
+				}
+				for i, textureCoord := range textureCoords {
+					if config.TextureCoordStyle == TextureCoordStyleOpenGL {
+						textureCoord[1] = 1 - textureCoord[1]
+					}
+					meshSpec.UniqueVertices[i].Texture1Coords = textureCoord
 				}
 			} else if attribute == gltf.JOINTS_0 {
 				jointsSlice, err := modeler.ReadJoints(document, acr, nil)
