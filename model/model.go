@@ -55,6 +55,33 @@ func NewModelFromCollection(ctx *CollectionContext, modelIndex int, modelConfig 
 	return m
 }
 
+func NewModelFromCollectionAll(ctx *CollectionContext, modelConfig *ModelConfig) *Model {
+	m := &Model{
+		collectionContext: ctx,
+		collection:        ctx.Collection,
+		modelConfig:       modelConfig,
+	}
+
+	for _, root := range m.collection.Scenes[0].Nodes {
+		nodes := []*modelspec.Node{root}
+		for len(nodes) > 0 {
+			var children []*modelspec.Node
+			for _, node := range nodes {
+				for _, meshID := range node.MeshIDs {
+					m.renderData = append(
+						m.renderData,
+						RenderData{MeshID: meshID, Transform: node.Transform},
+					)
+				}
+				children = append(children, node.Children...)
+			}
+			nodes = children
+		}
+	}
+
+	return m
+}
+
 func (m *Model) RootJoint() *modelspec.JointSpec {
 	return m.collection.RootJoint
 }
