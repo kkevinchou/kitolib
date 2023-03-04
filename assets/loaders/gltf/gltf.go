@@ -499,9 +499,13 @@ func parseMesh(document *gltf.Document, mesh *gltf.Mesh, parentTransforms mgl32.
 	var meshSpecs []*modelspec.MeshSpecification
 
 	for _, primitive := range mesh.Primitives {
+		if primitive.Mode != gltf.PrimitiveTriangles {
+			panic(fmt.Sprintf("received primitive mode %v but can only support triangles", primitive.Mode))
+		}
 		meshSpec := &modelspec.MeshSpecification{}
 		acrIndex := *primitive.Indices
-		meshIndices, err := modeler.ReadIndices(document, document.Accessors[int(acrIndex)], nil)
+		indicesAccessor := document.Accessors[int(acrIndex)]
+		meshIndices, err := modeler.ReadIndices(document, indicesAccessor, nil)
 		if err != nil {
 			return nil, err
 		}

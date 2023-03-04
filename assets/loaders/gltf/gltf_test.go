@@ -10,7 +10,7 @@ import (
 
 var testFile string = "../../../_assets/gltf/alpha.gltf"
 var testFile2 string = "../../../_assets/gltf/demo_scene_west.gltf"
-var testFile3 string = "../../../_assets/gltf/vehicle.gltf"
+var testFile3 string = "../../../_assets/gltf/mountain.gltf"
 var testFile4 string = "../../../_assets/gltf/lootbox.gltf"
 
 // bug hint: when a joint is defined but has no poses our
@@ -39,7 +39,7 @@ func TestBasic2(t *testing.T) {
 }
 
 func TestBasic3(t *testing.T) {
-	d, err := gltf.ParseGLTF(testFile2, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+	d, err := gltf.ParseGLTF(testFile3, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 	// c := model.CreateContext(d)
 	// _ = c
 	// _ = model.NewModelFromCollection(c, &model.ModelConfig{MaxAnimationJointWeights: 4})
