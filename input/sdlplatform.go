@@ -36,6 +36,7 @@ func NewSDLPlatform(window *sdl.Window, imguiIO imgui.IO) *SDLPlatform {
 
 func (platform *SDLPlatform) PollInput() Input {
 	platform.currentFrameInput = Input{
+		WindowEvent:       WindowEvent{},
 		MouseInput:        MouseInput{},
 		KeyboardInput:     KeyboardInput{},
 		CameraOrientation: mgl64.QuatIdent(),
@@ -140,6 +141,12 @@ func (platform *SDLPlatform) processEvent(event sdl.Event) {
 		platform.currentFrameInput.KeyboardInput[key] = KeyState{
 			Key:   key,
 			Event: KeyboardEventUp,
+		}
+	case sdl.WINDOWEVENT:
+		windowEvent := event.(*sdl.WindowEvent)
+		event := windowEvent.Event
+		if event == sdl.WINDOWEVENT_RESIZED {
+			platform.currentFrameInput.WindowEvent.Resized = true
 		}
 	}
 }

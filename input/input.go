@@ -92,11 +92,16 @@ type KeyboardInput map[KeyboardKey]KeyState
 type QuitCommand struct {
 }
 
+type WindowEvent struct {
+	Resized bool
+}
+
 // Input represents the input provided by a user during a command frame
 // Input should be only constructed by the input poller and should not be
 // written to by any systems, only read. Input is stored in a client side
 // command frame history which will copy the KeyboardInput by reference
 type Input struct {
+	WindowEvent       WindowEvent
 	KeyboardInput     KeyboardInput
 	MouseInput        MouseInput
 	CameraOrientation mgl64.Quat
