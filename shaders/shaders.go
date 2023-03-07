@@ -12,6 +12,13 @@ import (
 
 type ShaderProgram struct {
 	ID uint32
+
+	uniformCacheMat4  map[string]int32
+	uniformCacheVec2  map[string]int32
+	uniformCacheVec3  map[string]int32
+	uniformCacheVec4  map[string]int32
+	uniformCacheFloat map[string]int32
+	uniformCacheInt   map[string]int32
 }
 
 const (
@@ -60,7 +67,15 @@ func (s *ShaderManager) CompileShaderProgram(name, vertexShader, fragmentShader,
 	// gl.DeleteShader(vertexShader)
 	// gl.DeleteShader(fragmentShader)
 
-	s.shaderPrograms[name] = &ShaderProgram{ID: shaderProgram}
+	s.shaderPrograms[name] = &ShaderProgram{
+		ID:                shaderProgram,
+		uniformCacheMat4:  map[string]int32{},
+		uniformCacheVec2:  map[string]int32{},
+		uniformCacheVec3:  map[string]int32{},
+		uniformCacheVec4:  map[string]int32{},
+		uniformCacheFloat: map[string]int32{},
+		uniformCacheInt:   map[string]int32{},
+	}
 
 	return nil
 }
@@ -115,29 +130,69 @@ func compileShader(shaderPath string, shaderType uint32) (uint32, error) {
 }
 
 func (s *ShaderProgram) SetUniformMat4(uniform string, value mgl32.Mat4) {
-	uniformLocation := gl.GetUniformLocation(s.ID, gl.Str(fmt.Sprintf("%s\x00", uniform)))
+	var ok bool
+	var uniformLocation int32
+	if uniformLocation, ok = s.uniformCacheMat4[uniform]; !ok {
+		u := gl.GetUniformLocation(s.ID, gl.Str(fmt.Sprintf("%s\x00", uniform)))
+		s.uniformCacheMat4[uniform] = u
+		uniformLocation = u
+	}
+
 	gl.UniformMatrix4fv(uniformLocation, 1, false, &value[0])
 }
 
+func (s *ShaderProgram) SetUniformVec2(uniform string, value mgl32.Vec2) {
+	var ok bool
+	var uniformLocation int32
+	if uniformLocation, ok = s.uniformCacheVec2[uniform]; !ok {
+		u := gl.GetUniformLocation(s.ID, gl.Str(fmt.Sprintf("%s\x00", uniform)))
+		s.uniformCacheVec2[uniform] = u
+		uniformLocation = u
+	}
+	gl.Uniform3fv(uniformLocation, 1, &value[0])
+}
+
 func (s *ShaderProgram) SetUniformVec3(uniform string, value mgl32.Vec3) {
-	floats := []float32{value.X(), value.Y(), value.Z()}
-	uniformLocation := gl.GetUniformLocation(s.ID, gl.Str(fmt.Sprintf("%s\x00", uniform)))
-	gl.Uniform3fv(uniformLocation, 1, &floats[0])
+	var ok bool
+	var uniformLocation int32
+	if uniformLocation, ok = s.uniformCacheVec3[uniform]; !ok {
+		u := gl.GetUniformLocation(s.ID, gl.Str(fmt.Sprintf("%s\x00", uniform)))
+		s.uniformCacheVec3[uniform] = u
+		uniformLocation = u
+	}
+	gl.Uniform3fv(uniformLocation, 1, &value[0])
 }
 
 func (s *ShaderProgram) SetUniformVec4(uniform string, value mgl32.Vec4) {
-	floats := []float32{value.X(), value.Y(), value.Z(), value.W()}
-	uniformLocation := gl.GetUniformLocation(s.ID, gl.Str(fmt.Sprintf("%s\x00", uniform)))
-	gl.Uniform4fv(uniformLocation, 1, &floats[0])
+	var ok bool
+	var uniformLocation int32
+	if uniformLocation, ok = s.uniformCacheVec4[uniform]; !ok {
+		u := gl.GetUniformLocation(s.ID, gl.Str(fmt.Sprintf("%s\x00", uniform)))
+		s.uniformCacheVec4[uniform] = u
+		uniformLocation = u
+	}
+	gl.Uniform4fv(uniformLocation, 1, &value[0])
 }
 
 func (s *ShaderProgram) SetUniformInt(uniform string, value int32) {
-	uniformLocation := gl.GetUniformLocation(s.ID, gl.Str(fmt.Sprintf("%s\x00", uniform)))
+	var ok bool
+	var uniformLocation int32
+	if uniformLocation, ok = s.uniformCacheInt[uniform]; !ok {
+		u := gl.GetUniformLocation(s.ID, gl.Str(fmt.Sprintf("%s\x00", uniform)))
+		s.uniformCacheInt[uniform] = u
+		uniformLocation = u
+	}
 	gl.Uniform1i(uniformLocation, value)
 }
 
 func (s *ShaderProgram) SetUniformFloat(uniform string, value float32) {
-	uniformLocation := gl.GetUniformLocation(s.ID, gl.Str(fmt.Sprintf("%s\x00", uniform)))
+	var ok bool
+	var uniformLocation int32
+	if uniformLocation, ok = s.uniformCacheFloat[uniform]; !ok {
+		u := gl.GetUniformLocation(s.ID, gl.Str(fmt.Sprintf("%s\x00", uniform)))
+		s.uniformCacheFloat[uniform] = u
+		uniformLocation = u
+	}
 	gl.Uniform1f(uniformLocation, value)
 }
 
