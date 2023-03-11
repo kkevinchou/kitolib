@@ -26,7 +26,7 @@ func TestShader(t *testing.T) {
 	gl.Init()
 
 	shaderManager := shaders.NewShaderManager("testshaders")
-	shaderManager.CompileShaderProgram("testshader", "testshader", "testshader")
+	shaderManager.CompileShaderProgram("testshader", "testshader", "testshader", "")
 	shaderProgram := shaderManager.GetShaderProgram("testshader")
 
 	if shaderProgram == nil {
