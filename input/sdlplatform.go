@@ -106,12 +106,6 @@ func (platform *SDLPlatform) processEvent(event sdl.Event) {
 				platform.currentFrameInput.MouseInput.Buttons[i] = true
 			}
 		}
-		switch buttonEvent.Button {
-		case sdl.BUTTON_RIGHT:
-			platform.lastMousePosition[0] = buttonEvent.X
-			platform.lastMousePosition[1] = buttonEvent.Y
-			sdl.SetRelativeMouseMode(true)
-		}
 	case sdl.MOUSEBUTTONUP:
 		buttonEvent := event.(*sdl.MouseButtonEvent)
 		for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
@@ -119,11 +113,6 @@ func (platform *SDLPlatform) processEvent(event sdl.Event) {
 				platform.currentFrameInput.MouseInput.MouseButtonEvent[i] = MouseButtonEventUp
 				platform.currentFrameInput.MouseInput.Buttons[i] = true
 			}
-		}
-		switch buttonEvent.Button {
-		case sdl.BUTTON_RIGHT:
-			sdl.SetRelativeMouseMode(false)
-			sdl.GetMouseFocus().WarpMouseInWindow(platform.lastMousePosition[0], platform.lastMousePosition[1])
 		}
 	case sdl.TEXTINPUT:
 		inputEvent := event.(*sdl.TextInputEvent)
@@ -229,4 +218,12 @@ func (platform *SDLPlatform) ClipboardText() (string, error) {
 // SetClipboardText sets the text as the current clipboard text.
 func (platform *SDLPlatform) SetClipboardText(text string) {
 	_ = sdl.SetClipboardText(text)
+}
+
+func (platform *SDLPlatform) SetRelativeMouse(value bool) {
+	sdl.SetRelativeMouseMode(value)
+}
+
+func (platform *SDLPlatform) MoveMouse(x, y int32) {
+	platform.window.WarpMouseInWindow(x, y)
 }
