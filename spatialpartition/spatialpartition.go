@@ -8,7 +8,7 @@ import (
 type Entity interface {
 	GetID() int
 	Position() mgl64.Vec3
-	BoundingBox() collider.BoundingBox
+	BoundingBox() *collider.BoundingBox
 }
 
 type Partition struct {
@@ -39,14 +39,13 @@ func NewSpatialPartition(partitionDimension int, partitionCount int) *SpatialPar
 
 // QueryCollisionCandidates queries for collision candidates that have been stored in
 // the spatial partition
-func (s *SpatialPartition) QueryCollisionCandidates(entity Entity) []Entity {
+func (s *SpatialPartition) QueryCollisionCandidates(boundingBox collider.BoundingBox) []Entity {
 	// determine which partitions the entity touches
 	// collect all entities that belong to each of the partitions
 
-	boundingBox := entity.BoundingBox()
-	boundingBox = boundingBox.Transform(entity.Position())
 	partitions := s.intersectingPartitions(boundingBox)
 
+	// don't include the entity itself in the candidates
 	seen := map[int]bool{}
 	candidates := []Entity{}
 	for _, p := range partitions {
@@ -66,8 +65,7 @@ func (s *SpatialPartition) FrameSetup(entityList []Entity) {
 	s.Partitions = initializePartitions(s.PartitionDimension, s.PartitionCount)
 	for _, entity := range entityList {
 		boundingBox := entity.BoundingBox()
-		boundingBox = boundingBox.Transform(entity.Position())
-		partitions := s.intersectingPartitions(boundingBox)
+		partitions := s.intersectingPartitions(*boundingBox)
 		for _, p := range partitions {
 			p.entities = append(p.entities, entity)
 		}

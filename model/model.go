@@ -26,6 +26,7 @@ type Model struct {
 	collectionContext *CollectionContext
 	modelConfig       *ModelConfig
 	renderData        []RenderData
+	vertices          []modelspec.Vertex
 }
 
 func NewModelFromCollection(ctx *CollectionContext, modelIndex int, modelConfig *ModelConfig) *Model {
@@ -46,6 +47,10 @@ func NewModelFromCollection(ctx *CollectionContext, modelIndex int, modelConfig 
 					m.renderData,
 					RenderData{MeshID: meshID, Transform: node.Transform},
 				)
+				vertices := m.collection.Meshes[meshID].UniqueVertices
+				for _, v := range vertices {
+					m.vertices = append(m.vertices, v)
+				}
 			}
 			children = append(children, node.Children...)
 		}
@@ -72,6 +77,10 @@ func NewModelFromCollectionAll(ctx *CollectionContext, modelConfig *ModelConfig)
 						m.renderData,
 						RenderData{MeshID: meshID, Transform: node.Transform},
 					)
+					vertices := m.collection.Meshes[meshID].UniqueVertices
+					for _, v := range vertices {
+						m.vertices = append(m.vertices, v)
+					}
 				}
 				children = append(children, node.Children...)
 			}
@@ -94,13 +103,13 @@ func (m *Model) JointMap() map[int]*modelspec.JointSpec {
 	return m.collection.JointMap
 }
 
-func (m *Model) Vertices() []modelspec.Vertex {
-	var vertices []modelspec.Vertex
-	for _, mesh := range m.collection.Meshes {
-		vertices = append(vertices, mesh.Vertices...)
-	}
-	return vertices
-}
+// func (m *Model) Vertices() []modelspec.Vertex {
+// 	var vertices []modelspec.Vertex
+// 	for _, mesh := range m.collection.Meshes {
+// 		vertices = append(vertices, mesh.Vertices...)
+// 	}
+// 	return vertices
+// }
 
 func (m *Model) CollectionContext() *CollectionContext {
 	return m.collectionContext
@@ -112,6 +121,10 @@ func (m *Model) Collection() *modelspec.Collection {
 
 func (m *Model) RenderData() []RenderData {
 	return m.renderData
+}
+
+func (m *Model) Vertices() []modelspec.Vertex {
+	return m.vertices
 }
 
 type CollectionContext struct {

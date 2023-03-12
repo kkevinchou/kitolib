@@ -11,8 +11,8 @@ type BoundingBox struct {
 	MaxVertex mgl64.Vec3
 }
 
-func (c *BoundingBox) Transform(position mgl64.Vec3) BoundingBox {
-	return BoundingBox{MinVertex: c.MinVertex.Add(position), MaxVertex: c.MaxVertex.Add(position)}
+func (c *BoundingBox) Transform(mat mgl64.Mat4) *BoundingBox {
+	return &BoundingBox{MinVertex: mat.Mul4x1(c.MinVertex.Vec4(1)).Vec3(), MaxVertex: mat.Mul4x1(c.MaxVertex.Vec4(1)).Vec3()}
 }
 
 func BoundingBoxFromVertices(vertices []mgl64.Vec3) *BoundingBox {
