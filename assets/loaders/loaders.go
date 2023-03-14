@@ -34,7 +34,7 @@ func LoadTextures(directory string) map[string]*textures.Texture {
 	return textureMap
 }
 
-func LoadModels(directory string) map[string]*modelspec.Collection {
+func LoadCollections(directory string) map[string]*modelspec.Collection {
 	var subDirectories []string = []string{"gltf"}
 
 	extensions := map[string]any{
