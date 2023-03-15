@@ -22,6 +22,7 @@ type RenderData struct {
 }
 
 type Model struct {
+	name              string
 	collection        *modelspec.Collection
 	collectionContext *CollectionContext
 	modelConfig       *ModelConfig
@@ -60,6 +61,41 @@ func NewModelFromCollection(ctx *CollectionContext, modelIndex int, modelConfig 
 	return m
 }
 
+func NewModelsFromCollectionAll(ctx *CollectionContext, modelConfig *ModelConfig) []*Model {
+	var models []*Model
+
+	for _, root := range ctx.Collection.Scenes[0].Nodes {
+		nodes := []*modelspec.Node{root}
+		for len(nodes) > 0 {
+			var children []*modelspec.Node
+			for _, node := range nodes {
+				m := &Model{
+					name:              node.Name,
+					collectionContext: ctx,
+					collection:        ctx.Collection,
+					modelConfig:       modelConfig,
+				}
+				for _, meshID := range node.MeshIDs {
+					m.renderData = append(
+						m.renderData,
+						RenderData{MeshID: meshID, Transform: node.Transform},
+					)
+					vertices := m.collection.Meshes[meshID].UniqueVertices
+					for _, v := range vertices {
+						m.vertices = append(m.vertices, v)
+					}
+				}
+				models = append(models, m)
+				children = append(children, node.Children...)
+			}
+			nodes = children
+			break
+		}
+	}
+
+	return models
+}
+
 func NewModelFromCollectionAll(ctx *CollectionContext, modelConfig *ModelConfig) *Model {
 	m := &Model{
 		collectionContext: ctx,
@@ -89,6 +125,10 @@ func NewModelFromCollectionAll(ctx *CollectionContext, modelConfig *ModelConfig)
 	}
 
 	return m
+}
+
+func (m *Model) Name() string {
+	return m.name
 }
 
 func (m *Model) RootJoint() *modelspec.JointSpec {

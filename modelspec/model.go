@@ -82,6 +82,7 @@ type Scene struct {
 }
 
 type Node struct {
+	Name      string
 	MeshIDs   []int
 	Transform mgl32.Mat4
 	Children  []*Node

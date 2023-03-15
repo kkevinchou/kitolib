@@ -114,7 +114,9 @@ func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.Collection,
 func parseNode(document *gltf.Document, root uint32, indexToMeshes map[int][]int, parentTransform mgl32.Mat4) *modelspec.Node {
 	docNode := document.Nodes[int(root)]
 
-	node := &modelspec.Node{}
+	node := &modelspec.Node{
+		Name: docNode.Name,
+	}
 	if docNode.Mesh != nil {
 		index := int(*docNode.Mesh)
 		node.MeshIDs = append(node.MeshIDs, indexToMeshes[index]...)
