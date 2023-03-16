@@ -39,25 +39,23 @@ func NewModelsFromCollection(ctx *CollectionContext, modelConfig *ModelConfig) [
 
 	for _, root := range ctx.Collection.Scenes[0].Nodes {
 		nodes := []*modelspec.Node{root}
+		m := &Model{
+			name:              root.Name,
+			collectionContext: ctx,
+			collection:        ctx.Collection,
+			modelConfig:       modelConfig,
+		}
+
 		for len(nodes) > 0 {
 			var children []*modelspec.Node
-			for _, node := range nodes {
-				m := &Model{
-					name:              node.Name,
-					collectionContext: ctx,
-					collection:        ctx.Collection,
-					modelConfig:       modelConfig,
 
-					translation: node.Translation,
-					rotation:    node.Rotation,
-					scale:       node.Scale,
-				}
+			for _, node := range nodes {
 				for _, meshID := range node.MeshIDs {
 					m.renderData = append(
 						m.renderData,
 						// don't apply the node transform here since we set it at the model node
 						// TODO - when we implement children, they will need to have the transform set i think?
-						RenderData{MeshID: meshID, Transform: mgl32.Ident4()},
+						RenderData{MeshID: meshID, Transform: node.Transform},
 					)
 					vertices := m.collection.Meshes[meshID].UniqueVertices
 					for _, v := range vertices {
@@ -68,8 +66,24 @@ func NewModelsFromCollection(ctx *CollectionContext, modelConfig *ModelConfig) [
 				children = append(children, node.Children...)
 			}
 			nodes = children
-			break
 		}
+
+		// the root transforms are set on the model itself so that it will be
+		// transformed when loaded into the scene. child nodes are considered part
+		// of the same entity as the parent so the transforms are applied at render time
+
+		// scaleMat4 := mgl32.Scale3D(root.Scale[0], root.Scale[1], root.Scale[2])
+		// m.renderData[0].Transform = root.Rotation.Mat4().Mul4(scaleMat4)
+
+		// m.renderData[0].Transform = mgl32.Ident4()
+		m.renderData[0].Transform = root.Transform
+
+		// m.translation = root.Translation
+		// m.rotation = root.Rotation
+		// m.scale = root.Scale
+
+		m.rotation = mgl32.QuatIdent()
+		m.scale = mgl32.Vec3{1, 1, 1}
 	}
 
 	return models
