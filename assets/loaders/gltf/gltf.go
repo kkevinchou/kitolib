@@ -96,7 +96,7 @@ func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.Collection,
 	for _, docScene := range document.Scenes {
 		scene := &modelspec.Scene{}
 		for _, node := range docScene.Nodes {
-			scene.Nodes = append(scene.Nodes, parseNode(document, node, indexToMeshes, mgl32.Ident4()))
+			scene.Nodes = append(scene.Nodes, parseNode(document, node, indexToMeshes))
 		}
 		collection.Scenes = append(collection.Scenes, scene)
 	}
@@ -111,7 +111,7 @@ func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.Collection,
 	return &collection, nil
 }
 
-func parseNode(document *gltf.Document, root uint32, indexToMeshes map[int][]int, parentTransform mgl32.Mat4) *modelspec.Node {
+func parseNode(document *gltf.Document, root uint32, indexToMeshes map[int][]int) *modelspec.Node {
 	docNode := document.Nodes[int(root)]
 
 	node := &modelspec.Node{
@@ -133,10 +133,10 @@ func parseNode(document *gltf.Document, root uint32, indexToMeshes map[int][]int
 	translationMatrix := mgl32.Translate3D(translation[0], translation[1], translation[2])
 	rotationMatrix := node.Rotation.Mat4()
 	scaleMatrix := mgl32.Scale3D(scale[0], scale[1], scale[2])
-	node.Transform = parentTransform.Mul4(translationMatrix).Mul4(rotationMatrix).Mul4(scaleMatrix)
+	node.Transform = translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
 
 	for _, childNodeID := range docNode.Children {
-		node.Children = append(node.Children, parseNode(document, childNodeID, indexToMeshes, node.Transform))
+		node.Children = append(node.Children, parseNode(document, childNodeID, indexToMeshes))
 	}
 
 	return node
