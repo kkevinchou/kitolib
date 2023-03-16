@@ -19,6 +19,7 @@ type ShaderProgram struct {
 	uniformCacheVec4  map[string]int32
 	uniformCacheFloat map[string]int32
 	uniformCacheInt   map[string]int32
+	uniformCacheUInt  map[string]int32
 }
 
 const (
@@ -75,6 +76,7 @@ func (s *ShaderManager) CompileShaderProgram(name, vertexShader, fragmentShader,
 		uniformCacheVec4:  map[string]int32{},
 		uniformCacheFloat: map[string]int32{},
 		uniformCacheInt:   map[string]int32{},
+		uniformCacheUInt:  map[string]int32{},
 	}
 
 	return nil
@@ -183,6 +185,17 @@ func (s *ShaderProgram) SetUniformInt(uniform string, value int32) {
 		uniformLocation = u
 	}
 	gl.Uniform1i(uniformLocation, value)
+}
+
+func (s *ShaderProgram) SetUniformUInt(uniform string, value uint32) {
+	var ok bool
+	var uniformLocation int32
+	if uniformLocation, ok = s.uniformCacheUInt[uniform]; !ok {
+		u := gl.GetUniformLocation(s.ID, gl.Str(fmt.Sprintf("%s\x00", uniform)))
+		s.uniformCacheUInt[uniform] = u
+		uniformLocation = u
+	}
+	gl.Uniform1ui(uniformLocation, value)
 }
 
 func (s *ShaderProgram) SetUniformFloat(uniform string, value float32) {

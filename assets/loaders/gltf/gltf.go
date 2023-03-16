@@ -126,10 +126,13 @@ func parseNode(document *gltf.Document, root uint32, indexToMeshes map[int][]int
 	rotation := docNode.Rotation
 	scale := docNode.Scale
 
-	translationMatrix := mgl32.Translate3D(translation[0], translation[1], translation[2])
-	rotationMatrix := mgl32.Quat{V: mgl32.Vec3{rotation[0], rotation[1], rotation[2]}, W: rotation[3]}.Mat4()
-	scaleMatrix := mgl32.Scale3D(scale[0], scale[1], scale[2])
+	node.Translation = translation
+	node.Rotation = mgl32.Quat{V: mgl32.Vec3{rotation[0], rotation[1], rotation[2]}, W: rotation[3]}
+	node.Scale = scale
 
+	translationMatrix := mgl32.Translate3D(translation[0], translation[1], translation[2])
+	rotationMatrix := node.Rotation.Mat4()
+	scaleMatrix := mgl32.Scale3D(scale[0], scale[1], scale[2])
 	node.Transform = parentTransform.Mul4(translationMatrix).Mul4(rotationMatrix).Mul4(scaleMatrix)
 
 	for _, childNodeID := range docNode.Children {

@@ -28,40 +28,13 @@ type Model struct {
 	modelConfig       *ModelConfig
 	renderData        []RenderData
 	vertices          []modelspec.Vertex
+
+	translation mgl32.Vec3
+	rotation    mgl32.Quat
+	scale       mgl32.Vec3
 }
 
-func NewModelFromCollection(ctx *CollectionContext, modelIndex int, modelConfig *ModelConfig) *Model {
-	m := &Model{
-		collectionContext: ctx,
-		collection:        ctx.Collection,
-		modelConfig:       modelConfig,
-	}
-
-	root := m.collection.Scenes[0].Nodes[modelIndex]
-
-	nodes := []*modelspec.Node{root}
-	for len(nodes) > 0 {
-		var children []*modelspec.Node
-		for _, node := range nodes {
-			for _, meshID := range node.MeshIDs {
-				m.renderData = append(
-					m.renderData,
-					RenderData{MeshID: meshID, Transform: node.Transform},
-				)
-				vertices := m.collection.Meshes[meshID].UniqueVertices
-				for _, v := range vertices {
-					m.vertices = append(m.vertices, v)
-				}
-			}
-			children = append(children, node.Children...)
-		}
-		nodes = children
-	}
-
-	return m
-}
-
-func NewModelsFromCollectionAll(ctx *CollectionContext, modelConfig *ModelConfig) []*Model {
+func NewModelsFromCollection(ctx *CollectionContext, modelConfig *ModelConfig) []*Model {
 	var models []*Model
 
 	for _, root := range ctx.Collection.Scenes[0].Nodes {
@@ -74,11 +47,17 @@ func NewModelsFromCollectionAll(ctx *CollectionContext, modelConfig *ModelConfig
 					collectionContext: ctx,
 					collection:        ctx.Collection,
 					modelConfig:       modelConfig,
+
+					translation: node.Translation,
+					rotation:    node.Rotation,
+					scale:       node.Scale,
 				}
 				for _, meshID := range node.MeshIDs {
 					m.renderData = append(
 						m.renderData,
-						RenderData{MeshID: meshID, Transform: node.Transform},
+						// don't apply the node transform here since we set it at the model node
+						// TODO - when we implement children, they will need to have the transform set i think?
+						RenderData{MeshID: meshID, Transform: mgl32.Ident4()},
 					)
 					vertices := m.collection.Meshes[meshID].UniqueVertices
 					for _, v := range vertices {
@@ -94,37 +73,6 @@ func NewModelsFromCollectionAll(ctx *CollectionContext, modelConfig *ModelConfig
 	}
 
 	return models
-}
-
-func NewModelFromCollectionAll(ctx *CollectionContext, modelConfig *ModelConfig) *Model {
-	m := &Model{
-		collectionContext: ctx,
-		collection:        ctx.Collection,
-		modelConfig:       modelConfig,
-	}
-
-	for _, root := range m.collection.Scenes[0].Nodes {
-		nodes := []*modelspec.Node{root}
-		for len(nodes) > 0 {
-			var children []*modelspec.Node
-			for _, node := range nodes {
-				for _, meshID := range node.MeshIDs {
-					m.renderData = append(
-						m.renderData,
-						RenderData{MeshID: meshID, Transform: node.Transform},
-					)
-					vertices := m.collection.Meshes[meshID].UniqueVertices
-					for _, v := range vertices {
-						m.vertices = append(m.vertices, v)
-					}
-				}
-				children = append(children, node.Children...)
-			}
-			nodes = children
-		}
-	}
-
-	return m
 }
 
 func (m *Model) Name() string {
@@ -165,6 +113,18 @@ func (m *Model) RenderData() []RenderData {
 
 func (m *Model) Vertices() []modelspec.Vertex {
 	return m.vertices
+}
+
+func (m *Model) Translation() mgl32.Vec3 {
+	return m.translation
+}
+
+func (m *Model) Rotation() mgl32.Quat {
+	return m.rotation
+}
+
+func (m *Model) Scale() mgl32.Vec3 {
+	return m.scale
 }
 
 type CollectionContext struct {

@@ -66,6 +66,10 @@ func QuatF64ToF32(q mgl64.Quat) mgl32.Quat {
 	return mgl32.Quat{W: float32(q.W), V: Vec3F64ToF32(q.V)}
 }
 
+func QuatF32ToF64(q mgl32.Quat) mgl64.Quat {
+	return mgl64.Quat{W: float64(q.W), V: Vec3F32ToF64(q.V)}
+}
+
 func Mat4F64ToF32(m mgl64.Mat4) mgl32.Mat4 {
 	var result mgl32.Mat4
 	for i := 0; i < len(m); i++ {

@@ -86,6 +86,10 @@ type Node struct {
 	MeshIDs   []int
 	Transform mgl32.Mat4
 	Children  []*Node
+
+	Translation mgl32.Vec3
+	Rotation    mgl32.Quat
+	Scale       mgl32.Vec3
 }
 
 type Collection struct {
