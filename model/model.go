@@ -17,6 +17,7 @@ type ModelConfig struct {
 }
 
 type RenderData struct {
+	Name      string
 	MeshID    int
 	Transform mgl32.Mat4
 }
@@ -41,9 +42,10 @@ func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTra
 	if ignoreTransform {
 		transform = mgl32.Ident4()
 	}
+	transform = parentTransform.Mul4(transform)
 
 	for _, meshID := range node.MeshIDs {
-		data = append(data, RenderData{MeshID: meshID, Transform: transform})
+		data = append(data, RenderData{Name: node.Name, MeshID: meshID, Transform: transform})
 	}
 
 	for _, childNode := range node.Children {
