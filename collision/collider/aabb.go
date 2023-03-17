@@ -11,8 +11,27 @@ type BoundingBox struct {
 	MaxVertex mgl64.Vec3
 }
 
+func boundingBoxVertices(min, max mgl64.Vec3) []mgl64.Vec3 {
+	delta := max.Sub(min)
+	return []mgl64.Vec3{
+		min,
+		min.Add(mgl64.Vec3{delta[0], 0, 0}),
+		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
+		min.Add(mgl64.Vec3{0, delta[1], 0}),
+
+		max,
+		max.Sub(mgl64.Vec3{delta[0], 0, 0}),
+		max.Sub(mgl64.Vec3{delta[0], delta[1], 0}),
+		max.Sub(mgl64.Vec3{0, delta[1], 0}),
+	}
+}
+
 func (c *BoundingBox) Transform(mat mgl64.Mat4) *BoundingBox {
-	return &BoundingBox{MinVertex: mat.Mul4x1(c.MinVertex.Vec4(1)).Vec3(), MaxVertex: mat.Mul4x1(c.MaxVertex.Vec4(1)).Vec3()}
+	transformedVerts := boundingBoxVertices(c.MinVertex, c.MaxVertex)
+	for i := range transformedVerts {
+		transformedVerts[i] = mat.Mul4x1(transformedVerts[i].Vec4(1)).Vec3()
+	}
+	return BoundingBoxFromVertices(transformedVerts)
 }
 
 func BoundingBoxFromVertices(vertices []mgl64.Vec3) *BoundingBox {
