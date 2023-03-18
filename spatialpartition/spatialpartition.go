@@ -1,6 +1,8 @@
 package spatialpartition
 
 import (
+	"fmt"
+
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
@@ -12,17 +14,23 @@ type Entity interface {
 }
 
 type Partition struct {
-	x        int
-	y        int
-	z        int
-	AABB     *collider.BoundingBox
+	Key      PartitionKey
+	AABB     collider.BoundingBox
 	entities []Entity
 }
+
+func (p *Partition) String() string {
+	return fmt.Sprintf("Partition %v", p.Key)
+}
+
+type PartitionKey [3]int
 
 type SpatialPartition struct {
 	Partitions         [][][]*Partition
 	PartitionDimension int
 	PartitionCount     int
+
+	entityPartitionCache map[int][]*Partition
 }
 
 // NewSpatialPartition creates a spatial partition with the bottom at <0, 0, 0>
@@ -31,19 +39,19 @@ type SpatialPartition struct {
 // <-d, 0, -d> to <d, 2 * d, d>
 func NewSpatialPartition(partitionDimension int, partitionCount int) *SpatialPartition {
 	return &SpatialPartition{
-		Partitions:         initializePartitions(partitionDimension, partitionCount),
-		PartitionDimension: partitionDimension,
-		PartitionCount:     partitionCount,
+		Partitions:           initializePartitions(partitionDimension, partitionCount),
+		PartitionDimension:   partitionDimension,
+		PartitionCount:       partitionCount,
+		entityPartitionCache: map[int][]*Partition{},
 	}
 }
 
-// QueryCollisionCandidates queries for collision candidates that have been stored in
-// the spatial partition
-func (s *SpatialPartition) QueryCollisionCandidates(boundingBox collider.BoundingBox) []Entity {
+// QueryEntities queries for entities that exist in partitions that the boundingBox is a part of
+func (s *SpatialPartition) QueryEntities(boundingBox collider.BoundingBox) []Entity {
 	// determine which partitions the entity touches
 	// collect all entities that belong to each of the partitions
 
-	partitions := s.intersectingPartitions(boundingBox)
+	partitions := s.IntersectingPartitions(boundingBox)
 
 	// don't include the entity itself in the candidates
 	seen := map[int]bool{}
@@ -61,14 +69,31 @@ func (s *SpatialPartition) QueryCollisionCandidates(boundingBox collider.Boundin
 	return candidates
 }
 
-func (s *SpatialPartition) FrameSetup(entityList []Entity) {
-	s.Partitions = initializePartitions(s.PartitionDimension, s.PartitionCount)
+func (s *SpatialPartition) IndexEntities(entityList []Entity) {
 	for _, entity := range entityList {
 		boundingBox := entity.BoundingBox()
-		partitions := s.intersectingPartitions(*boundingBox)
-		for _, p := range partitions {
-			p.entities = append(p.entities, entity)
+		oldPartitions := s.entityPartitionCache[entity.GetID()]
+		newPartitions := s.IntersectingPartitions(*boundingBox)
+
+		// remove from old partitions
+		for _, partition := range oldPartitions {
+			newEntitiesList := make([]Entity, len(partition.entities)-1)
+
+			index := 0
+			for _, e := range partition.entities {
+				if e.GetID() != entity.GetID() {
+					newEntitiesList[index] = e
+				}
+			}
+			partition.entities = newEntitiesList
 		}
+
+		// add to new partitions
+		for _, partition := range newPartitions {
+			partition.entities = append(partition.entities, entity)
+		}
+
+		s.entityPartitionCache[entity.GetID()] = newPartitions
 	}
 }
 
@@ -81,10 +106,8 @@ func initializePartitions(partitionDimension int, partitionCount int) [][][]*Par
 			partitions[i][j] = make([]*Partition, partitionCount)
 			for k := 0; k < partitionCount; k++ {
 				partitions[i][j][k] = &Partition{
-					x: i,
-					y: j,
-					z: k,
-					AABB: &collider.BoundingBox{
+					Key: PartitionKey{i, j, k},
+					AABB: collider.BoundingBox{
 						MinVertex: mgl64.Vec3{float64(i*partitionDimension - d/2), float64(j*partitionDimension - d/2), float64(k*partitionDimension - d/2)},
 						MaxVertex: mgl64.Vec3{float64((i+1)*partitionDimension - d/2), float64((j+1)*partitionDimension - d/2), float64((k+1)*partitionDimension - d/2)},
 					},
@@ -95,7 +118,7 @@ func initializePartitions(partitionDimension int, partitionCount int) [][][]*Par
 	return partitions
 }
 
-func (s *SpatialPartition) intersectingPartitions(boundingBox collider.BoundingBox) []*Partition {
+func (s *SpatialPartition) IntersectingPartitions(boundingBox collider.BoundingBox) []*Partition {
 	// TODO(kchou): handle edge case where the vertex lies outside of the partitions. There may be some partitions
 	// leading up to another vertex that we will not discover
 
