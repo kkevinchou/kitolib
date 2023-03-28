@@ -83,6 +83,7 @@ func (s *SpatialPartition) IndexEntities(entityList []Entity) {
 			for _, e := range partition.entities {
 				if e.GetID() != entity.GetID() {
 					newEntitiesList[index] = e
+					index++
 				}
 			}
 			partition.entities = newEntitiesList
@@ -119,15 +120,12 @@ func initializePartitions(partitionDimension int, partitionCount int) [][][]*Par
 }
 
 func (s *SpatialPartition) IntersectingPartitions(boundingBox collider.BoundingBox) []*Partition {
-	// TODO(kchou): handle edge case where the vertex lies outside of the partitions. There may be some partitions
-	// leading up to another vertex that we will not discover
-
-	i1, j1, k1, found1 := s.VertexToPartition(boundingBox.MinVertex)
+	i1, j1, k1, found1 := s.VertexToPartitionClamped(boundingBox.MinVertex, true, false)
 	if !found1 {
 		return nil
 	}
 
-	i2, j2, k2, found2 := s.VertexToPartition(boundingBox.MaxVertex)
+	i2, j2, k2, found2 := s.VertexToPartitionClamped(boundingBox.MaxVertex, false, true)
 	if !found2 {
 		return nil
 	}
@@ -144,24 +142,74 @@ func (s *SpatialPartition) IntersectingPartitions(boundingBox collider.BoundingB
 	return partitions
 }
 
-func (s *SpatialPartition) VertexToPartition(vertex mgl64.Vec3) (int, int, int, bool) {
+func (s *SpatialPartition) calcMinPartitionVertex() mgl64.Vec3 {
 	d := s.PartitionDimension * s.PartitionCount
-	minPartitionVertex := mgl64.Vec3{float64(-d / 2), float64(-d / 2), float64(-d / 2)}
-	maxPartitionVertex := mgl64.Vec3{float64((s.PartitionCount)*s.PartitionDimension - d/2), float64((s.PartitionCount)*s.PartitionDimension - d/2), float64((s.PartitionCount)*s.PartitionDimension - d/2)}
+	return mgl64.Vec3{float64(-d / 2), float64(-d / 2), float64(-d / 2)}
+}
+
+func (s *SpatialPartition) calcMaxPartitionVertex() mgl64.Vec3 {
+	d := s.PartitionDimension * s.PartitionCount
+	return mgl64.Vec3{float64((s.PartitionCount)*s.PartitionDimension - d/2), float64((s.PartitionCount)*s.PartitionDimension - d/2), float64((s.PartitionCount)*s.PartitionDimension - d/2)}
+}
+
+func (s *SpatialPartition) VertexToPartitionClamped(vertex mgl64.Vec3, clampMin, clampMax bool) (int, int, int, bool) {
+	var i, j, k int
+	var clampI, clampJ, clampK bool
+
+	minPartitionVertex := s.calcMinPartitionVertex()
+	maxPartitionVertex := s.calcMaxPartitionVertex()
 
 	minDelta := vertex.Sub(minPartitionVertex)
-	if minDelta.X() < 0 || minDelta.Y() < 0 || minDelta.Z() < 0 {
-		return 0, 0, 0, false
+	if clampMin {
+		if minDelta.X() < 0 {
+			i = 0
+			clampI = true
+		}
+		if minDelta.Y() < 0 {
+			j = 0
+			clampJ = true
+		}
+		if minDelta.Z() < 0 {
+			k = 0
+			clampK = true
+		}
+	} else {
+		if minDelta.X() < 0 || minDelta.Y() < 0 || minDelta.Z() < 0 {
+			return 0, 0, 0, false
+		}
 	}
 
 	maxDelta := vertex.Sub(maxPartitionVertex)
-	if maxDelta.X() > 0 || maxDelta.Y() > 0 || maxDelta.Z() > 0 {
-		return 0, 0, 0, false
+	if clampMax {
+		if maxDelta.X() > 0 {
+			i = s.PartitionCount - 1
+			clampI = true
+		}
+		if maxDelta.Y() > 0 {
+			j = s.PartitionCount - 1
+			clampJ = true
+		}
+		if maxDelta.Z() > 0 {
+			k = s.PartitionCount - 1
+			clampK = true
+		}
+	} else {
+		if maxDelta.X() > 0 || maxDelta.Y() > 0 || maxDelta.Z() > 0 {
+			return 0, 0, 0, false
+		}
 	}
 
-	i := int(minDelta.X() / float64(s.PartitionDimension))
-	j := int(minDelta.Y() / float64(s.PartitionDimension))
-	k := int(minDelta.Z() / float64(s.PartitionDimension))
+	if !clampI {
+		i = int(minDelta.X() / float64(s.PartitionDimension))
+	}
+
+	if !clampJ {
+		j = int(minDelta.Y() / float64(s.PartitionDimension))
+	}
+
+	if !clampK {
+		k = int(minDelta.Z() / float64(s.PartitionDimension))
+	}
 
 	return i, j, k, true
 }
