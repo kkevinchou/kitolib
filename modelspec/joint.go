@@ -6,10 +6,6 @@ type JointSpec struct {
 	ID   int
 	Name string
 
-	// BindTransform is a transform that converts from the parent's space to the local space.
-	// this is relative to the parent
-	BindTransform mgl32.Mat4
-
 	// InverseBindTransform is a transform that converts from the bind space of a joint to
 	// world space. This is not relative to the parent. it is the inverse of FullBindTransform
 	InverseBindTransform mgl32.Mat4

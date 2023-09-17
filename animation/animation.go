@@ -52,6 +52,19 @@ func (player *AnimationPlayer) AnimationTransforms() map[int]mgl32.Mat4 {
 	return player.animationTransforms
 }
 
+func bindPoseHelper(joint *modelspec.JointSpec, transforms map[int]mgl32.Mat4) {
+	transforms[joint.ID] = joint.FullBindTransform
+	for _, child := range joint.Children {
+		bindPoseHelper(child, transforms)
+	}
+}
+
+func (player *AnimationPlayer) BindPoseTransforms() map[int]mgl32.Mat4 {
+	animationTransforms := map[int]mgl32.Mat4{}
+	bindPoseHelper(player.rootJoint, animationTransforms)
+	return animationTransforms
+}
+
 func (player *AnimationPlayer) PlayAnimation(animationName string) {
 	if player.blendAnimation == nil && player.currentAnimation != nil && player.currentAnimation.Name == animationName {
 		return
@@ -192,8 +205,8 @@ func computeJointTransformsHelper(joint *modelspec.JointSpec, parentTransform mg
 	localTransform := pose[joint.ID]
 
 	if _, ok := pose[joint.ID]; !ok {
-		// panic(fmt.Sprintf("joint with id %d does not have a pose", joint.ID))
-		localTransform = joint.BindTransform
+		panic(fmt.Sprintf("joint with id %d does not have a pose", joint.ID))
+		// 	localTransform = joint.LocalBindTransform
 	}
 
 	// model-space transform that includes all the parental transforms
