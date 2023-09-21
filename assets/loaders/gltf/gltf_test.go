@@ -29,9 +29,6 @@ func TestBasic(t *testing.T) {
 
 func TestBasic2(t *testing.T) {
 	d, err := gltf.ParseGLTF(testFile4, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
-	// c := model.CreateContext(d)
-	// _ = c
-	// _ = model.NewModelFromCollection(c, &model.ModelConfig{MaxAnimationJointWeights: 4})
 	if err != nil {
 		t.Error(err)
 	}
@@ -40,9 +37,6 @@ func TestBasic2(t *testing.T) {
 
 func TestBasic3(t *testing.T) {
 	d, err := gltf.ParseGLTF(testFile3, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
-	// c := model.CreateContext(d)
-	// _ = c
-	// _ = model.NewModelFromCollection(c, &model.ModelConfig{MaxAnimationJointWeights: 4})
 	if err != nil {
 		t.Error(err)
 	}

@@ -19,23 +19,24 @@ type ModelConfig struct {
 type RenderData struct {
 	Name      string
 	MeshID    int
+	Mesh      *modelspec.MeshSpecification
 	Transform mgl32.Mat4
+	VAO       uint32
 }
 
 type Model struct {
-	name              string
-	modelGroup        *modelspec.ModelGroup
-	modelGroupContext *ModelGroupContext
-	modelConfig       *ModelConfig
-	renderData        []RenderData
-	vertices          []modelspec.Vertex
+	name        string
+	modelGroup  *modelspec.ModelGroup
+	modelConfig *ModelConfig
+	renderData  []RenderData
+	vertices    []modelspec.Vertex
 
 	translation mgl32.Vec3
 	rotation    mgl32.Quat
 	scale       mgl32.Vec3
 }
 
-func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTransform bool) []RenderData {
+func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTransform bool, vaos map[int]uint32, meshes []*modelspec.MeshSpecification) []RenderData {
 	var data []RenderData
 
 	transform := node.Transform
@@ -45,28 +46,36 @@ func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTra
 	transform = parentTransform.Mul4(transform)
 
 	for _, meshID := range node.MeshIDs {
-		data = append(data, RenderData{Name: node.Name, MeshID: meshID, Transform: transform})
+		data = append(
+			data, RenderData{
+				Name:      node.Name,
+				MeshID:    meshID,
+				Mesh:      meshes[meshID],
+				Transform: transform,
+				VAO:       vaos[meshID],
+			},
+		)
 	}
 
 	for _, childNode := range node.Children {
-		data = append(data, parseRenderData(childNode, transform, false)...)
+		data = append(data, parseRenderData(childNode, transform, false, vaos, meshes)...)
 	}
 
 	return data
 }
 
-func NewModelsFromCollection(ctx *ModelGroupContext, modelConfig *ModelConfig) []*Model {
+func NewModelsFromCollection(modelGroup *modelspec.ModelGroup, modelConfig *ModelConfig) []*Model {
 	var models []*Model
+	vaos := createVAOs(modelConfig, modelGroup.Meshes)
 
-	for _, root := range ctx.ModelGroup.Scenes[0].Nodes {
+	for _, root := range modelGroup.Scenes[0].Nodes {
 		m := &Model{
-			name:              root.Name,
-			modelGroupContext: ctx,
-			modelGroup:        ctx.ModelGroup,
-			modelConfig:       modelConfig,
+			name:        root.Name,
+			modelGroup:  modelGroup,
+			modelConfig: modelConfig,
 
 			// ignores the transform from the root, this is applied to the model directly
-			renderData: parseRenderData(root, mgl32.Ident4(), true),
+			renderData: parseRenderData(root, mgl32.Ident4(), true, vaos, modelGroup.Meshes),
 		}
 
 		for _, renderData := range m.renderData {
@@ -104,14 +113,6 @@ func (m *Model) JointMap() map[int]*modelspec.JointSpec {
 	return m.modelGroup.JointMap
 }
 
-func (m *Model) ModelGroupContext() *ModelGroupContext {
-	return m.modelGroupContext
-}
-
-func (m *Model) ModelGroup() *modelspec.ModelGroup {
-	return m.modelGroup
-}
-
 func (m *Model) RenderData() []RenderData {
 	return m.renderData
 }
@@ -137,15 +138,7 @@ type ModelGroupContext struct {
 	VAOS       map[int]uint32
 }
 
-func CreateContext(modelGroup *modelspec.ModelGroup) *ModelGroupContext {
-	c := &ModelGroupContext{
-		ModelGroup: modelGroup,
-		VAOS:       createVAOs(ModelConfig{MaxAnimationJointWeights: 4}, modelGroup.Meshes),
-	}
-	return c
-}
-
-func createVAOs(modelConfig ModelConfig, meshes []*modelspec.MeshSpecification) map[int]uint32 {
+func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification) map[int]uint32 {
 	vaos := map[int]uint32{}
 	for i, m := range meshes {
 		// initialize the VAO
