@@ -133,11 +133,6 @@ func (m *Model) Scale() mgl32.Vec3 {
 	return m.scale
 }
 
-type ModelGroupContext struct {
-	ModelGroup *modelspec.ModelGroup
-	VAOS       map[int]uint32
-}
-
 func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification) map[int]uint32 {
 	vaos := map[int]uint32{}
 	for i, m := range meshes {
