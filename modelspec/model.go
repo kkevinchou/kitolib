@@ -92,7 +92,7 @@ type Node struct {
 	Scale       mgl32.Vec3
 }
 
-type Collection struct {
+type ModelGroup struct {
 	Scenes   []*Scene
 	Meshes   []*MeshSpecification
 	Textures []string

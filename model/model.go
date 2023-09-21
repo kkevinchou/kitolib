@@ -24,8 +24,8 @@ type RenderData struct {
 
 type Model struct {
 	name              string
-	collection        *modelspec.Collection
-	collectionContext *CollectionContext
+	modelGroup        *modelspec.ModelGroup
+	modelGroupContext *ModelGroupContext
 	modelConfig       *ModelConfig
 	renderData        []RenderData
 	vertices          []modelspec.Vertex
@@ -55,14 +55,14 @@ func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTra
 	return data
 }
 
-func NewModelsFromCollection(ctx *CollectionContext, modelConfig *ModelConfig) []*Model {
+func NewModelsFromCollection(ctx *ModelGroupContext, modelConfig *ModelConfig) []*Model {
 	var models []*Model
 
-	for _, root := range ctx.Collection.Scenes[0].Nodes {
+	for _, root := range ctx.ModelGroup.Scenes[0].Nodes {
 		m := &Model{
 			name:              root.Name,
-			collectionContext: ctx,
-			collection:        ctx.Collection,
+			modelGroupContext: ctx,
+			modelGroup:        ctx.ModelGroup,
 			modelConfig:       modelConfig,
 
 			// ignores the transform from the root, this is applied to the model directly
@@ -71,7 +71,7 @@ func NewModelsFromCollection(ctx *CollectionContext, modelConfig *ModelConfig) [
 
 		for _, renderData := range m.renderData {
 			meshID := renderData.MeshID
-			vertices := m.collection.Meshes[meshID].UniqueVertices
+			vertices := m.modelGroup.Meshes[meshID].UniqueVertices
 			for _, v := range vertices {
 				m.vertices = append(m.vertices, v)
 			}
@@ -93,23 +93,23 @@ func (m *Model) Name() string {
 }
 
 func (m *Model) RootJoint() *modelspec.JointSpec {
-	return m.collection.RootJoint
+	return m.modelGroup.RootJoint
 }
 
 func (m *Model) Animations() map[string]*modelspec.AnimationSpec {
-	return m.collection.Animations
+	return m.modelGroup.Animations
 }
 
 func (m *Model) JointMap() map[int]*modelspec.JointSpec {
-	return m.collection.JointMap
+	return m.modelGroup.JointMap
 }
 
-func (m *Model) CollectionContext() *CollectionContext {
-	return m.collectionContext
+func (m *Model) ModelGroupContext() *ModelGroupContext {
+	return m.modelGroupContext
 }
 
-func (m *Model) Collection() *modelspec.Collection {
-	return m.collection
+func (m *Model) ModelGroup() *modelspec.ModelGroup {
+	return m.modelGroup
 }
 
 func (m *Model) RenderData() []RenderData {
@@ -132,27 +132,27 @@ func (m *Model) Scale() mgl32.Vec3 {
 	return m.scale
 }
 
-type CollectionContext struct {
-	Collection *modelspec.Collection
+type ModelGroupContext struct {
+	ModelGroup *modelspec.ModelGroup
 	VAOS       map[int]uint32
 }
 
-func CreateContext(collection *modelspec.Collection) *CollectionContext {
-	c := &CollectionContext{
-		Collection: collection,
-		VAOS:       map[int]uint32{},
+func CreateContext(modelGroup *modelspec.ModelGroup) *ModelGroupContext {
+	c := &ModelGroupContext{
+		ModelGroup: modelGroup,
+		VAOS:       createVAOs(ModelConfig{MaxAnimationJointWeights: 4}, modelGroup.Meshes),
 	}
-	c.initialize(ModelConfig{MaxAnimationJointWeights: 4})
 	return c
 }
 
-func (c *CollectionContext) initialize(modelConfig ModelConfig) {
-	for i, m := range c.Collection.Meshes {
+func createVAOs(modelConfig ModelConfig, meshes []*modelspec.MeshSpecification) map[int]uint32 {
+	vaos := map[int]uint32{}
+	for i, m := range meshes {
 		// initialize the VAO
 		var vao uint32
 		gl.GenVertexArrays(1, &vao)
 		gl.BindVertexArray(vao)
-		c.VAOS[i] = vao
+		vaos[i] = vao
 
 		var vertexAttributes []float32
 		var jointIDsAttribute []int32
@@ -237,6 +237,8 @@ func (c *CollectionContext) initialize(modelConfig ModelConfig) {
 		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(m.VertexIndices)*4, gl.Ptr(m.VertexIndices), gl.STATIC_DRAW)
 	}
+
+	return vaos
 }
 
 func fillWeights(jointIDs []int, weights []float32, maxAnimationJointWeights int) ([]int, []float32) {

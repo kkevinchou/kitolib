@@ -32,8 +32,8 @@ type ParseConfig struct {
 	TextureCoordStyle TextureCoordStyle
 }
 
-func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.Collection, error) {
-	var collection modelspec.Collection
+func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.ModelGroup, error) {
+	var modelGroup modelspec.ModelGroup
 
 	document, err := gltf.Open(documentPath)
 	if err != nil {
@@ -48,7 +48,7 @@ func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.Collection,
 		}
 	}
 	if parsedJoints != nil {
-		collection.JointMap = parsedJoints.JointMap
+		modelGroup.JointMap = parsedJoints.JointMap
 	}
 
 	parsedAnimations := map[string]*modelspec.AnimationSpec{}
@@ -60,7 +60,7 @@ func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.Collection,
 		}
 	}
 	if len(parsedAnimations) > 0 {
-		collection.Animations = parsedAnimations
+		modelGroup.Animations = parsedAnimations
 	}
 
 	for _, texture := range document.Textures {
@@ -68,7 +68,7 @@ func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.Collection,
 		if img.MimeType != "image/png" {
 			panic(fmt.Sprintf("image %s has mimetype %s which is not supported for textures", img.Name, img.MimeType))
 		}
-		collection.Textures = append(collection.Textures, img.Name)
+		modelGroup.Textures = append(modelGroup.Textures, img.Name)
 	}
 
 	// indexToMeshes is a map from the mesh index in the gltf document, to our own
@@ -80,14 +80,14 @@ func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.Collection,
 	meshID := 0
 	for index, mesh := range document.Meshes {
 		mat := mgl32.QuatRotate(mgl32.DegToRad(180), mgl32.Vec3{0, 0, -1}).Mat4()
-		meshSpecs, err := parseMesh(document, mesh, mat, collection.Textures, config)
+		meshSpecs, err := parseMesh(document, mesh, mat, modelGroup.Textures, config)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
 		}
 
 		for i := 0; i < len(meshSpecs); i++ {
-			collection.Meshes = append(collection.Meshes, meshSpecs[i])
+			modelGroup.Meshes = append(modelGroup.Meshes, meshSpecs[i])
 			indexToMeshes[index] = append(indexToMeshes[index], meshID)
 			meshID++
 		}
@@ -98,17 +98,17 @@ func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.Collection,
 		for _, node := range docScene.Nodes {
 			scene.Nodes = append(scene.Nodes, parseNode(document, node, indexToMeshes))
 		}
-		collection.Scenes = append(collection.Scenes, scene)
+		modelGroup.Scenes = append(modelGroup.Scenes, scene)
 	}
 
 	rootTransforms := mgl32.Ident4()
 	if parsedJoints != nil {
-		collection.RootJoint = parsedJoints.RootJoint
+		modelGroup.RootJoint = parsedJoints.RootJoint
 		rootTransforms = rootParentTransforms(document, parsedJoints)
 		_ = rootTransforms
 	}
 
-	return &collection, nil
+	return &modelGroup, nil
 }
 
 func parseNode(document *gltf.Document, root uint32, indexToMeshes map[int][]int) *modelspec.Node {
