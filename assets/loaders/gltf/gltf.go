@@ -3,6 +3,7 @@ package gltf
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -32,8 +33,10 @@ type ParseConfig struct {
 	TextureCoordStyle TextureCoordStyle
 }
 
-func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.ModelGroup, error) {
+func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspec.ModelGroup, error) {
 	var modelGroup modelspec.ModelGroup
+
+	modelGroup.Name = name
 
 	document, err := gltf.Open(documentPath)
 	if err != nil {
@@ -68,7 +71,9 @@ func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.ModelGroup,
 		if img.MimeType != "image/png" && img.MimeType != "image/jpeg" && img.MimeType != "image/jpg" {
 			panic(fmt.Sprintf("image %s has mimetype %s which is not supported for textures (png, jpeg, jpg)", img.Name, img.MimeType))
 		}
-		modelGroup.Textures = append(modelGroup.Textures, img.Name)
+
+		name := strings.Split(img.URI, ".")[0]
+		modelGroup.Textures = append(modelGroup.Textures, name)
 	}
 
 	// indexToMeshes is a map from the mesh index in the gltf document, to our own

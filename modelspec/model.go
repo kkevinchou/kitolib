@@ -93,6 +93,8 @@ type Node struct {
 }
 
 type ModelGroup struct {
+	Name string
+
 	Scenes   []*Scene
 	Meshes   []*MeshSpecification
 	Textures []string

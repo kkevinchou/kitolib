@@ -12,7 +12,7 @@ var testFile string = "../../../_assets/gltf/alpha.gltf"
 var testFile2 string = "../../../_assets/gltf/demo_scene_west.gltf"
 var testFile3 string = "../../../_assets/gltf/mountain.gltf"
 var testFile4 string = "../../../_assets/gltf/lootbox.gltf"
-var sponza string = "../../../_assets/gltf/lootbox.gltf"
+var sponza string = "../../../_assets/gltf/Sponza.gltf"
 
 // bug hint: when a joint is defined but has no poses our
 // animation loading code freaks out. i removed the joint animatiosn from the legs
@@ -22,7 +22,7 @@ var sponza string = "../../../_assets/gltf/lootbox.gltf"
 // how we handled poses where a joint does not have any poses
 
 func TestBasic(t *testing.T) {
-	d, err := gltf.ParseGLTF(sponza, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+	d, err := gltf.ParseGLTF("", sponza, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 	_ = d
 	if err != nil {
 		t.Error(err)
@@ -30,7 +30,7 @@ func TestBasic(t *testing.T) {
 }
 
 func TestBasic2(t *testing.T) {
-	d, err := gltf.ParseGLTF(testFile4, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+	d, err := gltf.ParseGLTF("", testFile4, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 	if err != nil {
 		t.Error(err)
 	}
@@ -38,7 +38,7 @@ func TestBasic2(t *testing.T) {
 }
 
 func TestBasic3(t *testing.T) {
-	d, err := gltf.ParseGLTF(testFile3, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+	d, err := gltf.ParseGLTF("", testFile3, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 	if err != nil {
 		t.Error(err)
 	}
@@ -47,7 +47,7 @@ func TestBasic3(t *testing.T) {
 
 // our current animation system only works on models with keyframes that include all joints (even if redundant).
 func TestFullKeyFrames(t *testing.T) {
-	m, err := gltf.ParseGLTF(testFile, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+	m, err := gltf.ParseGLTF("", testFile, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 	if err != nil {
 		t.Error(err)
 	}

@@ -55,7 +55,7 @@ func LoadModelGroups(directory string) map[string]*modelspec.ModelGroup {
 			// if metaData.Name != "vehicle" && metaData.Name != "demo_scene_west" {
 			// 	continue
 			// }
-			modelGroup, err := gltf.ParseGLTF(metaData.Path, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+			modelGroup, err := gltf.ParseGLTF(metaData.Name, metaData.Path, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 			if err != nil {
 				fmt.Println("failed to parse gltf for", metaData.Path, ", error:", err)
 				continue
