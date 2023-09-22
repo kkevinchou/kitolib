@@ -64,7 +64,7 @@ func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTra
 	return data
 }
 
-func NewModelsFromCollection(modelGroup *modelspec.ModelGroup, modelConfig *ModelConfig) []*Model {
+func CreateModelsFromModelGroup(modelGroup *modelspec.ModelGroup, modelConfig *ModelConfig) []*Model {
 	var models []*Model
 	vaos := createVAOs(modelConfig, modelGroup.Meshes)
 
@@ -133,6 +133,10 @@ func (m *Model) Scale() mgl32.Vec3 {
 	return m.scale
 }
 
+// TODO: create the ability to create a singular vao that has all the mesh data merged into one
+// also, when we merged everything into one vao, we need to first apply any node transformations
+// onto the vertices since we won't be able to set uniforms for each mesh, as we now render them
+// all at once, rather than one at a time and setting the transform uniforms
 func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification) map[int]uint32 {
 	vaos := map[int]uint32{}
 	for i, m := range meshes {

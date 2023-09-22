@@ -65,8 +65,8 @@ func ParseGLTF(documentPath string, config *ParseConfig) (*modelspec.ModelGroup,
 
 	for _, texture := range document.Textures {
 		img := document.Images[int(*texture.Source)]
-		if img.MimeType != "image/png" {
-			panic(fmt.Sprintf("image %s has mimetype %s which is not supported for textures", img.Name, img.MimeType))
+		if img.MimeType != "image/png" && img.MimeType != "image/jpeg" && img.MimeType != "image/jpg" {
+			panic(fmt.Sprintf("image %s has mimetype %s which is not supported for textures (png, jpeg, jpg)", img.Name, img.MimeType))
 		}
 		modelGroup.Textures = append(modelGroup.Textures, img.Name)
 	}

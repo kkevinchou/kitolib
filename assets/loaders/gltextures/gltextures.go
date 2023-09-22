@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	_ "image/jpeg"
 	_ "image/png"
 
 	"github.com/disintegration/imaging"

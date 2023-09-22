@@ -17,7 +17,9 @@ func LoadTextures(directory string) map[string]*textures.Texture {
 	var subDirectories []string = []string{"images", "icons", "gltf"}
 
 	extensions := map[string]any{
-		".png": nil,
+		".png":  nil,
+		".jpeg": nil,
+		".jpg":  nil,
 	}
 
 	textureMap := map[string]*textures.Texture{}
