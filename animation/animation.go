@@ -5,10 +5,14 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/kkevinchou/kitolib/model"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
 )
+
+type AnimatedModel interface {
+	Animations() map[string]*modelspec.AnimationSpec
+	RootJoint() *modelspec.JointSpec
+}
 
 type AnimationPlayer struct {
 	elapsedTime         time.Duration
@@ -30,7 +34,7 @@ type AnimationPlayer struct {
 }
 
 // func NewAnimationPlayer(animations map[string]*modelspec.AnimationSpec, rootJoint *modelspec.JointSpec) *AnimationPlayer {
-func NewAnimationPlayer(m *model.Model) *AnimationPlayer {
+func NewAnimationPlayer(m AnimatedModel) *AnimationPlayer {
 	return &AnimationPlayer{
 		animations: m.Animations(),
 		rootJoint:  m.RootJoint(),

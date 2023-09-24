@@ -4,8 +4,6 @@ import (
 	"math"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/model"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
 type Capsule struct {
@@ -28,13 +26,13 @@ func (c Capsule) Transform(position mgl64.Vec3) Capsule {
 	return NewCapsule(newTop, newBottom, c.Radius)
 }
 
-func NewCapsuleFromModel(model *model.Model) Capsule {
-	var vertices []mgl64.Vec3
-	for _, vertex := range model.Vertices() {
-		vertices = append(vertices, utils.Vec3F32ToF64(vertex.Position))
-	}
-	return NewCapsuleFromVertices(vertices)
-}
+// func NewCapsuleFromModel(model *model.Model) Capsule {
+// var vertices []mgl64.Vec3
+// for _, vertex := range model.Vertices() {
+// 	vertices = append(vertices, utils.Vec3F32ToF64(vertex.Position))
+// }
+// return NewCapsuleFromVertices(vertices)
+// }
 
 // CreateCapsuleFromMesh creates a capsule centered at the model space origin
 func NewCapsuleFromVertices(vertices []mgl64.Vec3) Capsule {

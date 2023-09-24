@@ -2,8 +2,6 @@ package collider
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/model"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
 type BoundingBox struct {
@@ -77,7 +75,7 @@ func BoundingBoxFromCapsule(capsule Capsule) *BoundingBox {
 	}
 }
 
-// BoundingBoxFromModel creates a bounding box from a model's vertices
-func BoundingBoxFromModel(m *model.Model) *BoundingBox {
-	return BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(m.Vertices()))
-}
+// // BoundingBoxFromModel creates a bounding box from a model's vertices
+// func BoundingBoxFromModel(m *model.Model) *BoundingBox {
+// 	return BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(m.Vertices()))
+// }
