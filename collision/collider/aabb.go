@@ -74,8 +74,3 @@ func BoundingBoxFromCapsule(capsule Capsule) *BoundingBox {
 		MaxVertex: capsule.Top.Add(mgl64.Vec3{capsule.Radius, capsule.Radius, capsule.Radius}),
 	}
 }
-
-// // BoundingBoxFromModel creates a bounding box from a model's vertices
-// func BoundingBoxFromModel(m *model.Model) *BoundingBox {
-// 	return BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(m.Vertices()))
-// }
