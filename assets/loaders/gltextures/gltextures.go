@@ -5,6 +5,8 @@ import (
 	"image/draw"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	_ "image/jpeg"
 	_ "image/png"
@@ -13,11 +15,19 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
-func NewTexture(file string) uint32 {
+type TextureInfo struct {
+	Name   string
+	Width  int32
+	Height int32
+	Data   []uint8
+}
+
+func ReadTextureInfo(file string) TextureInfo {
 	imgFile, err := os.Open(file)
 	if err != nil {
 		log.Fatalf("texture %q not found on disk: %v\n", file, err)
 	}
+
 	img, _, err := image.Decode(imgFile)
 	if err != nil {
 		panic(err)
@@ -33,6 +43,12 @@ func NewTexture(file string) uint32 {
 
 	draw.Draw(rgba, rgba.Bounds(), nrgba, image.Point{0, 0}, draw.Src)
 
+	size := rgba.Rect.Size()
+	textureName := strings.Split(filepath.Base(file), ".")[0]
+	return TextureInfo{Name: textureName, Width: int32(size.X), Height: int32(size.Y), Data: rgba.Pix}
+}
+
+func CreateOpenGLTexture(textureInfo TextureInfo) uint32 {
 	var texture uint32
 	gl.GenTextures(1, &texture)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
@@ -44,13 +60,12 @@ func NewTexture(file string) uint32 {
 		gl.TEXTURE_2D,
 		0,
 		gl.SRGB_ALPHA,
-		int32(rgba.Rect.Size().X),
-		int32(rgba.Rect.Size().Y),
+		textureInfo.Width,
+		textureInfo.Height,
 		0,
 		gl.RGBA,
 		gl.UNSIGNED_BYTE,
-		gl.Ptr(rgba.Pix))
-
+		gl.Ptr(textureInfo.Data))
 	return texture
 }
 

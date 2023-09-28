@@ -3,6 +3,7 @@ package loaders
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/kkevinchou/kitolib/assets/loaders/glfonts"
 	"github.com/kkevinchou/kitolib/assets/loaders/gltextures"
@@ -22,15 +23,43 @@ func LoadTextures(directory string) map[string]*textures.Texture {
 		".jpg":  nil,
 	}
 
-	textureMap := map[string]*textures.Texture{}
 	fileMetaData := utils.GetFileMetaData(directory, subDirectories, extensions)
 
+	filesChan := make(chan string, len(fileMetaData))
+	textureInfoChan := make(chan gltextures.TextureInfo, len(fileMetaData))
+
+	workerCount := 10
+	doneCount := 0
+	var doneCountLock sync.Mutex
+
+	for i := 0; i < workerCount; i++ {
+		go func(workerIndex int) {
+			for fileName := range filesChan {
+				textureInfo := gltextures.ReadTextureInfo(fileName)
+				textureInfoChan <- textureInfo
+			}
+
+			doneCountLock.Lock()
+			doneCount += 1
+			if doneCount == workerCount {
+				close(textureInfoChan)
+			}
+			doneCountLock.Unlock()
+		}(i)
+	}
+
 	for _, metaData := range fileMetaData {
-		textureID := gltextures.NewTexture(metaData.Path)
-		if _, ok := textureMap[metaData.Name]; ok {
-			panic(fmt.Sprintf("texture with duplicate name %s found", metaData.Name))
+		filesChan <- metaData.Path
+	}
+	close(filesChan)
+
+	textureMap := map[string]*textures.Texture{}
+	for textureInfo := range textureInfoChan {
+		textureID := gltextures.CreateOpenGLTexture(textureInfo)
+		if _, ok := textureMap[textureInfo.Name]; ok {
+			panic(fmt.Sprintf("texture with duplicate name %s found", textureInfo.Name))
 		}
-		textureMap[metaData.Name] = &textures.Texture{ID: textureID}
+		textureMap[textureInfo.Name] = &textures.Texture{ID: textureID}
 	}
 
 	return textureMap

@@ -2,6 +2,7 @@ package assets
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/kkevinchou/kitolib/assets/loaders"
 	"github.com/kkevinchou/kitolib/font"
@@ -18,14 +19,23 @@ type AssetManager struct {
 func NewAssetManager(directory string, loadVisualAssets bool) *AssetManager {
 	var loadedTextures map[string]*textures.Texture
 	var loadedFonts map[string]font.Font
+	var textureLoadTime time.Duration
 	if loadVisualAssets {
+		start := time.Now()
 		loadedTextures = loaders.LoadTextures(directory)
+		textureLoadTime = time.Since(start)
+
 		loadedFonts = loaders.LoadFonts(directory)
 	}
 
+	start := time.Now()
+	modelGroups := loaders.LoadModelGroups(directory)
+	fmt.Println(textureLoadTime, "to load textures")
+	fmt.Println(time.Since(start), "to load models")
+
 	assetManager := AssetManager{
 		textures:    loadedTextures,
-		modelGroups: loaders.LoadModelGroups(directory),
+		modelGroups: modelGroups,
 		fonts:       loadedFonts,
 	}
 
