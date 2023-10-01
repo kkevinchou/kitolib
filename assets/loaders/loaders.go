@@ -5,8 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kkevinchou/kitolib/assets/loaders/glfonts"
-	"github.com/kkevinchou/kitolib/assets/loaders/gltextures"
+	"github.com/kkevinchou/kitolib/assets/loaders/backends/opengl"
 	"github.com/kkevinchou/kitolib/assets/loaders/gltf"
 	"github.com/kkevinchou/kitolib/font"
 	"github.com/kkevinchou/kitolib/modelspec"
@@ -26,7 +25,7 @@ func LoadTextures(directory string) map[string]*textures.Texture {
 	fileMetaData := utils.GetFileMetaData(directory, subDirectories, extensions)
 
 	filesChan := make(chan string, len(fileMetaData))
-	textureInfoChan := make(chan gltextures.TextureInfo, len(fileMetaData))
+	textureInfoChan := make(chan opengl.TextureInfo, len(fileMetaData))
 
 	workerCount := 10
 	doneCount := 0
@@ -35,7 +34,7 @@ func LoadTextures(directory string) map[string]*textures.Texture {
 	for i := 0; i < workerCount; i++ {
 		go func(workerIndex int) {
 			for fileName := range filesChan {
-				textureInfo := gltextures.ReadTextureInfo(fileName)
+				textureInfo := opengl.ReadTextureInfo(fileName)
 				textureInfoChan <- textureInfo
 			}
 
@@ -55,7 +54,7 @@ func LoadTextures(directory string) map[string]*textures.Texture {
 
 	textureMap := map[string]*textures.Texture{}
 	for textureInfo := range textureInfoChan {
-		textureID := gltextures.CreateOpenGLTexture(textureInfo)
+		textureID := opengl.CreateOpenGLTexture(textureInfo)
 		if _, ok := textureMap[textureInfo.Name]; ok {
 			panic(fmt.Sprintf("texture with duplicate name %s found", textureInfo.Name))
 		}
@@ -113,7 +112,7 @@ func LoadFonts(directory string) map[string]font.Font {
 		if strings.HasPrefix(metaData.Name, "_") {
 			continue
 		}
-		fonts[metaData.Name] = glfonts.NewFont(metaData.Path, 12)
+		fonts[metaData.Name] = opengl.NewFont(metaData.Path, 12)
 	}
 
 	return fonts

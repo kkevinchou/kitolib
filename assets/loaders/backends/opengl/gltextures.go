@@ -1,4 +1,4 @@
-package gltextures
+package opengl
 
 import (
 	"image"

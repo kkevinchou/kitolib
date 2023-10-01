@@ -1,8 +1,7 @@
-package glfonts
+package opengl
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/assets/loaders/gltextures"
 	"github.com/kkevinchou/kitolib/font"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
@@ -57,7 +56,7 @@ func NewFont(fontFile string, size int) font.Font {
 		}
 	}
 
-	textTexture := gltextures.NewFontTexture(pixels, surface.ClipRect.W, surface.ClipRect.H)
+	textTexture := NewFontTexture(pixels, surface.ClipRect.W, surface.ClipRect.H)
 	return font.Font{
 		TextureID:   textTexture,
 		Glyphs:      glyphs,
