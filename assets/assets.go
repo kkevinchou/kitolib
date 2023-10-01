@@ -11,9 +11,9 @@ import (
 )
 
 type AssetManager struct {
-	textures    map[string]*textures.Texture
-	modelGroups map[string]*modelspec.ModelGroup
-	fonts       map[string]font.Font
+	textures map[string]*textures.Texture
+	scenes   map[string]*modelspec.Scene
+	fonts    map[string]font.Font
 }
 
 func NewAssetManager(directory string, loadVisualAssets bool) *AssetManager {
@@ -29,14 +29,14 @@ func NewAssetManager(directory string, loadVisualAssets bool) *AssetManager {
 	}
 
 	start := time.Now()
-	modelGroups := loaders.LoadModelGroups(directory)
+	scenes := loaders.LoadScenes(directory)
 	fmt.Println(textureLoadTime, "to load textures")
 	fmt.Println(time.Since(start), "to load models")
 
 	assetManager := AssetManager{
-		textures:    loadedTextures,
-		modelGroups: modelGroups,
-		fonts:       loadedFonts,
+		textures: loadedTextures,
+		scenes:   scenes,
+		fonts:    loadedFonts,
 	}
 
 	return &assetManager
@@ -49,11 +49,11 @@ func (a *AssetManager) GetTexture(name string) *textures.Texture {
 	return a.textures[name]
 }
 
-func (a *AssetManager) GetModelGroup(name string) *modelspec.ModelGroup {
-	if _, ok := a.modelGroups[name]; !ok {
+func (a *AssetManager) GetScene(name string) *modelspec.Scene {
+	if _, ok := a.scenes[name]; !ok {
 		panic(fmt.Sprintf("could not find animated model %s", name))
 	}
-	return a.modelGroups[name]
+	return a.scenes[name]
 }
 
 func (a *AssetManager) GetFont(name string) font.Font {

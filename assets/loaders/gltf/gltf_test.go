@@ -22,7 +22,7 @@ var sponza string = "../../../_assets/gltf/Sponza.gltf"
 // how we handled poses where a joint does not have any poses
 
 func TestBasic(t *testing.T) {
-	d, err := gltf.ParseGLTF("", sponza, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+	d, err := gltf.ParseGLTF("", testFile2, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 	_ = d
 	if err != nil {
 		t.Error(err)

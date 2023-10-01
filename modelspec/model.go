@@ -74,13 +74,6 @@ type ModelSpecification struct {
 	Textures []string
 }
 
-// SceneSpecification
-// A scene contains a bunch of meshes that can be referenced by different individual objects
-type Scene struct {
-	// how do i join a node to its mesh and textures and animation?
-	Nodes []*Node
-}
-
 type Node struct {
 	Name      string
 	MeshIDs   []int
@@ -92,10 +85,10 @@ type Node struct {
 	Scale       mgl32.Vec3
 }
 
-type ModelGroup struct {
+type Scene struct {
 	Name string
 
-	Scenes   []*Scene
+	Nodes    []*Node
 	Meshes   []*MeshSpecification
 	Textures []string
 
