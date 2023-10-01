@@ -33,47 +33,47 @@ type ParseConfig struct {
 	TextureCoordStyle TextureCoordStyle
 }
 
-func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspec.Scene, error) {
-	var scene modelspec.Scene
+func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspec.Document, error) {
+	var document modelspec.Document
 
-	scene.Name = name
+	document.Name = name
 
-	document, err := gltf.Open(documentPath)
+	gltfDocument, err := gltf.Open(documentPath)
 	if err != nil {
 		return nil, err
 	}
 
 	var parsedJoints *ParsedJoints
-	for _, skin := range document.Skins {
-		parsedJoints, err = parseJoints(document, skin)
+	for _, skin := range gltfDocument.Skins {
+		parsedJoints, err = parseJoints(gltfDocument, skin)
 		if err != nil {
 			return nil, err
 		}
 	}
 	if parsedJoints != nil {
-		scene.JointMap = parsedJoints.JointMap
+		document.JointMap = parsedJoints.JointMap
 	}
 
 	parsedAnimations := map[string]*modelspec.AnimationSpec{}
-	for _, animation := range document.Animations {
-		parsedAnimation, err := parseAnimation(document, animation, parsedJoints)
+	for _, animation := range gltfDocument.Animations {
+		parsedAnimation, err := parseAnimation(gltfDocument, animation, parsedJoints)
 		parsedAnimations[animation.Name] = parsedAnimation
 		if err != nil {
 			return nil, err
 		}
 	}
 	if len(parsedAnimations) > 0 {
-		scene.Animations = parsedAnimations
+		document.Animations = parsedAnimations
 	}
 
-	for _, texture := range document.Textures {
-		img := document.Images[int(*texture.Source)]
+	for _, texture := range gltfDocument.Textures {
+		img := gltfDocument.Images[int(*texture.Source)]
 		if img.MimeType != "image/png" && img.MimeType != "image/jpeg" && img.MimeType != "image/jpg" {
 			panic(fmt.Sprintf("image %s has mimetype %s which is not supported for textures (png, jpeg, jpg)", img.Name, img.MimeType))
 		}
 
 		name := strings.Split(img.URI, ".")[0]
-		scene.Textures = append(scene.Textures, name)
+		document.Textures = append(document.Textures, name)
 	}
 
 	// indexToMeshes is a map from the mesh index in the gltf document, to our own
@@ -83,36 +83,39 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 
 	indexToMeshes := map[int][]int{}
 	meshID := 0
-	for index, mesh := range document.Meshes {
+	for index, mesh := range gltfDocument.Meshes {
 		mat := mgl32.QuatRotate(mgl32.DegToRad(180), mgl32.Vec3{0, 0, -1}).Mat4()
-		meshSpecs, err := parseMesh(document, mesh, mat, scene.Textures, config)
+		meshSpecs, err := parseMesh(gltfDocument, mesh, mat, document.Textures, config)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
 		}
 
 		for i := 0; i < len(meshSpecs); i++ {
-			scene.Meshes = append(scene.Meshes, meshSpecs[i])
+			document.Meshes = append(document.Meshes, meshSpecs[i])
 			indexToMeshes[index] = append(indexToMeshes[index], meshID)
 			meshID++
 		}
 	}
 
-	for _, docScene := range document.Scenes {
+	for _, docScene := range gltfDocument.Scenes {
+		scene := modelspec.Scene{}
 		for _, node := range docScene.Nodes {
-			scene.Nodes = append(scene.Nodes, parseNode(document, node, indexToMeshes))
+			scene.Nodes = append(scene.Nodes, parseNode(gltfDocument, node, indexToMeshes))
 		}
+		document.Scenes = append(document.Scenes, &scene)
+		// only load one scene for now
 		break
 	}
 
 	rootTransforms := mgl32.Ident4()
 	if parsedJoints != nil {
-		scene.RootJoint = parsedJoints.RootJoint
-		rootTransforms = rootParentTransforms(document, parsedJoints)
+		document.RootJoint = parsedJoints.RootJoint
+		rootTransforms = rootParentTransforms(gltfDocument, parsedJoints)
 		_ = rootTransforms
 	}
 
-	return &scene, nil
+	return &document, nil
 }
 
 func parseNode(document *gltf.Document, root uint32, indexToMeshes map[int][]int) *modelspec.Node {

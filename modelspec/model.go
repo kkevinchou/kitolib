@@ -74,6 +74,10 @@ type ModelSpecification struct {
 	Textures []string
 }
 
+type Scene struct {
+	Nodes []*Node
+}
+
 type Node struct {
 	Name      string
 	MeshIDs   []int
@@ -85,10 +89,10 @@ type Node struct {
 	Scale       mgl32.Vec3
 }
 
-type Scene struct {
+type Document struct {
 	Name string
 
-	Nodes    []*Node
+	Scenes   []*Scene
 	Meshes   []*MeshSpecification
 	Textures []string
 

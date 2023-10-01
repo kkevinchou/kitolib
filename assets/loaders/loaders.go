@@ -65,14 +65,14 @@ func LoadTextures(directory string) map[string]*textures.Texture {
 	return textureMap
 }
 
-func LoadScenes(directory string) map[string]*modelspec.Scene {
+func LoadDocuments(directory string) map[string]*modelspec.Document {
 	var subDirectories []string = []string{"gltf"}
 
 	extensions := map[string]any{
 		".gltf": nil,
 	}
 
-	scenes := map[string]*modelspec.Scene{}
+	scenes := map[string]*modelspec.Document{}
 	fileMetaData := utils.GetFileMetaData(directory, subDirectories, extensions)
 
 	for _, metaData := range fileMetaData {
@@ -84,12 +84,12 @@ func LoadScenes(directory string) map[string]*modelspec.Scene {
 			// if metaData.Name != "vehicle" && metaData.Name != "demo_scene_west" {
 			// 	continue
 			// }
-			scene, err := gltf.ParseGLTF(metaData.Name, metaData.Path, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+			document, err := gltf.ParseGLTF(metaData.Name, metaData.Path, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 			if err != nil {
 				fmt.Println("failed to parse gltf for", metaData.Path, ", error:", err)
 				continue
 			}
-			scenes[metaData.Name] = scene
+			scenes[metaData.Name] = document
 		} else {
 			panic(fmt.Sprintf("wtf unexpected extension %s", metaData.Extension))
 		}
