@@ -40,7 +40,7 @@ type MeshChunkSpecification struct {
 	PBRMaterial *PBRMaterial
 }
 
-type MeshSpecification struct {
+type PrimitiveSpecification struct {
 	VertexIndices []uint32
 	// the unique vertices in the mesh chunk. VertexIndices details
 	// how the unique vertices are arranged to construct the mesh
@@ -53,26 +53,26 @@ type MeshSpecification struct {
 	PBRMaterial *PBRMaterial
 }
 
-// ModelSpecification is the output of any parsed model files (e.g. from Blender, Maya, etc)
-// and acts a the blueprint for the model that contains all the associated vertex and
-// animation data. This struct should be agnostic to the 3D modelling tool that produced the data.
-type ModelSpecification struct {
-	Meshes []*MeshSpecification
+// // ModelSpecification is the output of any parsed model files (e.g. from Blender, Maya, etc)
+// // and acts a the blueprint for the model that contains all the associated vertex and
+// // animation data. This struct should be agnostic to the 3D modelling tool that produced the data.
+// type ModelSpecification struct {
+// 	Meshes []*MeshSpecification
 
-	// Joint Hierarchy
-	RootJoint *JointSpec
+// 	// Joint Hierarchy
+// 	RootJoint *JointSpec
 
-	// Animations
-	Animations map[string]*AnimationSpec
+// 	// Animations
+// 	Animations map[string]*AnimationSpec
 
-	RootTransforms mgl32.Mat4
+// 	RootTransforms mgl32.Mat4
 
-	JointMap map[int]*JointSpec
+// 	JointMap map[int]*JointSpec
 
-	// list of textures by name. the index within this slice is
-	// the id for which the modespec references textures
-	Textures []string
-}
+// 	// list of textures by name. the index within this slice is
+// 	// the id for which the modespec references textures
+// 	Textures []string
+// }
 
 type Scene struct {
 	Nodes []*Node
@@ -93,7 +93,7 @@ type Document struct {
 	Name string
 
 	Scenes   []*Scene
-	Meshes   []*MeshSpecification
+	Meshes   []*PrimitiveSpecification
 	Textures []string
 
 	JointMap   map[int]*JointSpec
@@ -141,7 +141,7 @@ func (s byWeights) Less(i, j int) bool {
 // 	}
 // }
 
-func (m *MeshSpecification) TextureName() string {
+func (m *PrimitiveSpecification) TextureName() string {
 	if m.PBRMaterial == nil {
 		return ""
 	}

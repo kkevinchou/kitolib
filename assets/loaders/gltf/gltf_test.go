@@ -12,6 +12,7 @@ var testFile string = "../../../_assets/gltf/alpha.gltf"
 var testFile2 string = "../../../_assets/gltf/demo_scene_west.gltf"
 var testFile3 string = "../../../_assets/gltf/mountain.gltf"
 var testFile4 string = "../../../_assets/gltf/lootbox.gltf"
+var testFile5 string = "../../../_assets/gltf/demo_scene_samurai.gltf"
 var sponza string = "../../../_assets/gltf/Sponza.gltf"
 
 // bug hint: when a joint is defined but has no poses our
@@ -22,7 +23,7 @@ var sponza string = "../../../_assets/gltf/Sponza.gltf"
 // how we handled poses where a joint does not have any poses
 
 func TestBasic(t *testing.T) {
-	d, err := gltf.ParseGLTF("", testFile2, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+	d, err := gltf.ParseGLTF("", testFile5, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 	_ = d
 	if err != nil {
 		t.Error(err)
