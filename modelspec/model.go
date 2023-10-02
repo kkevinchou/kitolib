@@ -79,8 +79,7 @@ type Node struct {
 type Document struct {
 	Name string
 
-	Scenes []*Scene
-	// Primitives []*PrimitiveSpecification
+	Scenes   []*Scene
 	Meshes   []*MeshSpecification
 	Textures []string
 
