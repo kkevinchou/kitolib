@@ -27,19 +27,6 @@ type Vertex struct {
 	JointWeights []float32
 }
 
-type MeshChunkSpecification struct {
-	VertexIndices []uint32
-	// the unique vertices in the mesh chunk. VertexIndices details
-	// how the unique vertices are arranged to construct the mesh
-	UniqueVertices []Vertex
-
-	// the ordered vertices where each triplet forms a triangle for the mesh
-	Vertices []Vertex
-
-	// PBR
-	PBRMaterial *PBRMaterial
-}
-
 type PrimitiveSpecification struct {
 	VertexIndices []uint32
 	// the unique vertices in the mesh chunk. VertexIndices details
@@ -80,7 +67,7 @@ type Scene struct {
 
 type Node struct {
 	Name      string
-	MeshIDs   []int
+	MeshID    *int
 	Transform mgl32.Mat4
 	Children  []*Node
 
@@ -92,8 +79,9 @@ type Node struct {
 type Document struct {
 	Name string
 
-	Scenes   []*Scene
-	Meshes   []*PrimitiveSpecification
+	Scenes []*Scene
+	// Primitives []*PrimitiveSpecification
+	Meshes   []*MeshSpecification
 	Textures []string
 
 	JointMap   map[int]*JointSpec
@@ -101,6 +89,10 @@ type Document struct {
 
 	// not sure where to put this
 	RootJoint *JointSpec
+}
+
+type MeshSpecification struct {
+	Primitives []*PrimitiveSpecification
 }
 
 func NormalizeWeights(jointWeights []JointWeight) {

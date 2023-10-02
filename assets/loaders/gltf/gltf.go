@@ -76,32 +76,24 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 		document.Textures = append(document.Textures, name)
 	}
 
-	// indexToMeshes is a map from the mesh index in the gltf document, to our own
-	// mesh ID system. what's important here is that a node only contains one gltf mesh,
-	// but one gltf mesh can generate multiple kitolib meshes, each with their own ID.
-	// consumers of kitolib interact with only our own ID system, and not gltf's
+	// indexToMeshes is a map from the mesh index in the gltf document, to a list of
+	// primitive ids
 
-	indexToMeshes := map[int][]int{}
-	meshID := 0
-	for index, mesh := range gltfDocument.Meshes {
+	for _, mesh := range gltfDocument.Meshes {
 		mat := mgl32.QuatRotate(mgl32.DegToRad(180), mgl32.Vec3{0, 0, -1}).Mat4()
 		primitiveSpecs, err := parsePrimitiveSpecs(gltfDocument, mesh, mat, document.Textures, config)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
 		}
-
-		for i := 0; i < len(primitiveSpecs); i++ {
-			document.Meshes = append(document.Meshes, primitiveSpecs[i])
-			indexToMeshes[index] = append(indexToMeshes[index], meshID)
-			meshID++
-		}
+		meshSpec := &modelspec.MeshSpecification{Primitives: primitiveSpecs}
+		document.Meshes = append(document.Meshes, meshSpec)
 	}
 
 	for _, docScene := range gltfDocument.Scenes {
 		scene := modelspec.Scene{}
 		for _, node := range docScene.Nodes {
-			scene.Nodes = append(scene.Nodes, parseNode(gltfDocument, node, indexToMeshes))
+			scene.Nodes = append(scene.Nodes, parseNode(gltfDocument, node))
 		}
 		document.Scenes = append(document.Scenes, &scene)
 		// only load one scene for now
@@ -118,15 +110,15 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 	return &document, nil
 }
 
-func parseNode(document *gltf.Document, root uint32, indexToMeshes map[int][]int) *modelspec.Node {
+func parseNode(document *gltf.Document, root uint32) *modelspec.Node {
 	docNode := document.Nodes[int(root)]
 
 	node := &modelspec.Node{
 		Name: docNode.Name,
 	}
 	if docNode.Mesh != nil {
-		index := int(*docNode.Mesh)
-		node.MeshIDs = append(node.MeshIDs, indexToMeshes[index]...)
+		id := int(*docNode.Mesh)
+		node.MeshID = &id
 	}
 
 	translation := docNode.Translation
@@ -143,7 +135,7 @@ func parseNode(document *gltf.Document, root uint32, indexToMeshes map[int][]int
 	node.Transform = translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
 
 	for _, childNodeID := range docNode.Children {
-		node.Children = append(node.Children, parseNode(document, childNodeID, indexToMeshes))
+		node.Children = append(node.Children, parseNode(document, childNodeID))
 	}
 
 	return node
