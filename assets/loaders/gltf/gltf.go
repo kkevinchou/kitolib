@@ -86,7 +86,7 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 			fmt.Println(err)
 			return nil, err
 		}
-		meshSpec := &modelspec.MeshSpecification{MeshID: i, Primitives: primitiveSpecs}
+		meshSpec := &modelspec.MeshSpecification{ID: i, Primitives: primitiveSpecs}
 		document.Meshes = append(document.Meshes, meshSpec)
 	}
 
