@@ -91,6 +91,7 @@ type Document struct {
 }
 
 type MeshSpecification struct {
+	ID         int
 	Primitives []*PrimitiveSpecification
 }
 

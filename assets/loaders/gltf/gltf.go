@@ -79,14 +79,14 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 	// indexToMeshes is a map from the mesh index in the gltf document, to a list of
 	// primitive ids
 
-	for _, mesh := range gltfDocument.Meshes {
+	for i, mesh := range gltfDocument.Meshes {
 		mat := mgl32.QuatRotate(mgl32.DegToRad(180), mgl32.Vec3{0, 0, -1}).Mat4()
 		primitiveSpecs, err := parsePrimitiveSpecs(gltfDocument, mesh, mat, document.Textures, config)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
 		}
-		meshSpec := &modelspec.MeshSpecification{Primitives: primitiveSpecs}
+		meshSpec := &modelspec.MeshSpecification{MeshID: i, Primitives: primitiveSpecs}
 		document.Meshes = append(document.Meshes, meshSpec)
 	}
 
