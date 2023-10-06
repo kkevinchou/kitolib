@@ -74,3 +74,10 @@ func BoundingBoxFromCapsule(capsule Capsule) *BoundingBox {
 		MaxVertex: capsule.Top.Add(mgl64.Vec3{capsule.Radius, capsule.Radius, capsule.Radius}),
 	}
 }
+
+func NewBoundingBox(min, max mgl64.Vec3) *BoundingBox {
+	return &BoundingBox{
+		MinVertex: min,
+		MaxVertex: max,
+	}
+}

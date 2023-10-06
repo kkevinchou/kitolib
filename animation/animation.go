@@ -9,8 +9,11 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
-type AnimatedModel interface {
-	Animations() map[string]*modelspec.AnimationSpec
+type AnimationState interface {
+	Loop() bool
+	ElapsedTime() time.Duration
+	AnimationTransforms() map[int]mgl32.Mat4
+	AnimationName() string
 	RootJoint() *modelspec.JointSpec
 }
 
@@ -33,13 +36,14 @@ type AnimationPlayer struct {
 	blendDurationSoFar        time.Duration
 }
 
-// func NewAnimationPlayer(animations map[string]*modelspec.AnimationSpec, rootJoint *modelspec.JointSpec) *AnimationPlayer {
-func NewAnimationPlayer(m AnimatedModel) *AnimationPlayer {
-	return &AnimationPlayer{
-		animations: m.Animations(),
-		rootJoint:  m.RootJoint(),
-		loop:       true,
-	}
+func NewAnimationPlayer() *AnimationPlayer {
+	return &AnimationPlayer{}
+}
+
+func (player *AnimationPlayer) Initialize(animations map[string]*modelspec.AnimationSpec, rootJoint *modelspec.JointSpec) {
+	player.animations = animations
+	player.rootJoint = rootJoint
+	player.loop = true
 }
 
 func (player *AnimationPlayer) CurrentAnimation() string {
