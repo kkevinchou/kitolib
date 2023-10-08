@@ -2,6 +2,8 @@ package collider
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/kitolib/modelspec"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 type Mesh interface {
@@ -106,4 +108,29 @@ func NewBoxTriMesh(w, l, h float64) TriMesh {
 		[]mgl64.Vec3{{halfW, h, -halfL}, {-halfW, h, -halfL}, {-halfW, h, halfL}},
 	))
 	return triMesh
+}
+
+func CreateTriMeshFromPrimitives(primitives []*modelspec.PrimitiveSpecification) *TriMesh {
+	triMesh := TriMesh{}
+
+	for _, p := range primitives {
+		for i := 0; i < len(p.Vertices); i += 3 {
+			v0 := p.Vertices[i]
+			v1 := p.Vertices[i+1]
+			v2 := p.Vertices[i+2]
+
+			triVerts := utils.ModelSpecVertsToVec3([]modelspec.Vertex{v0, v1, v2})
+
+			vec1 := triVerts[1].Sub(triVerts[0])
+			vec2 := triVerts[2].Sub(triVerts[1])
+
+			tri := Triangle{
+				Normal: vec1.Cross(vec2).Normalize(),
+				Points: triVerts,
+			}
+			triMesh.Triangles = append(triMesh.Triangles, tri)
+		}
+	}
+
+	return &triMesh
 }

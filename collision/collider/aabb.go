@@ -4,6 +4,8 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
+var EmptyBoundingBox BoundingBox
+
 type BoundingBox struct {
 	MinVertex mgl64.Vec3
 	MaxVertex mgl64.Vec3
@@ -24,7 +26,7 @@ func boundingBoxVertices(min, max mgl64.Vec3) []mgl64.Vec3 {
 	}
 }
 
-func (c *BoundingBox) Transform(mat mgl64.Mat4) *BoundingBox {
+func (c BoundingBox) Transform(mat mgl64.Mat4) BoundingBox {
 	transformedVerts := boundingBoxVertices(c.MinVertex, c.MaxVertex)
 	for i := range transformedVerts {
 		transformedVerts[i] = mat.Mul4x1(transformedVerts[i].Vec4(1)).Vec3()
@@ -32,7 +34,7 @@ func (c *BoundingBox) Transform(mat mgl64.Mat4) *BoundingBox {
 	return BoundingBoxFromVertices(transformedVerts)
 }
 
-func BoundingBoxFromVertices(vertices []mgl64.Vec3) *BoundingBox {
+func BoundingBoxFromVertices(vertices []mgl64.Vec3) BoundingBox {
 	var minX, minY, minZ, maxX, maxY, maxZ float64
 
 	minX = vertices[0].X()
@@ -65,7 +67,7 @@ func BoundingBoxFromVertices(vertices []mgl64.Vec3) *BoundingBox {
 	minVertex := mgl64.Vec3{minX, minY, minZ}
 	maxVertex := mgl64.Vec3{maxX, maxY, maxZ}
 
-	return &BoundingBox{MinVertex: minVertex, MaxVertex: maxVertex}
+	return BoundingBox{MinVertex: minVertex, MaxVertex: maxVertex}
 }
 
 func BoundingBoxFromCapsule(capsule Capsule) *BoundingBox {

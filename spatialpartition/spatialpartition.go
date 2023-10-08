@@ -10,7 +10,7 @@ import (
 type Entity interface {
 	GetID() int
 	Position() mgl64.Vec3
-	BoundingBox() *collider.BoundingBox
+	BoundingBox() collider.BoundingBox
 }
 
 type Partition struct {
@@ -56,6 +56,7 @@ func (s *SpatialPartition) QueryEntities(boundingBox collider.BoundingBox) []Ent
 	// don't include the entity itself in the candidates
 	seen := map[int]bool{}
 	candidates := []Entity{}
+
 	for _, p := range partitions {
 		entities := p.entities
 		for _, e := range entities {
@@ -73,12 +74,11 @@ func (s *SpatialPartition) IndexEntities(entityList []Entity) {
 	for _, entity := range entityList {
 		boundingBox := entity.BoundingBox()
 		oldPartitions := s.entityPartitionCache[entity.GetID()]
-		newPartitions := s.IntersectingPartitions(*boundingBox)
+		newPartitions := s.IntersectingPartitions(boundingBox)
 
 		// remove from old partitions
 		for _, partition := range oldPartitions {
 			newEntitiesList := make([]Entity, len(partition.entities)-1)
-
 			index := 0
 			for _, e := range partition.entities {
 				if e.GetID() != entity.GetID() {
