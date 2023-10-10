@@ -82,16 +82,6 @@ func (s *SpatialPartition) QueryEntities(boundingBox collider.BoundingBox) []Ent
 }
 
 func (s *SpatialPartition) IndexEntities(entityList []Entity) {
-	// s.Partitions = initializePartitions(s.PartitionDimension, s.PartitionCount)
-	// for _, entity := range entityList {
-	// 	boundingBox := entity.BoundingBox()
-	// 	newPartitions := s.IntersectingPartitions(boundingBox)
-	// 	for _, partitionKey := range newPartitions {
-	// 		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
-	// 		partition.entities[entity.GetID()] = entity
-	// 		// partition.entities = append(partition.entities, entity)
-	// 	}
-	// }
 	for _, entity := range entityList {
 		// remove from old partitions
 		oldPartitions := s.entityPartitionCache[entity.GetID()]
