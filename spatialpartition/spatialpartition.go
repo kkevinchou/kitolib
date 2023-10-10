@@ -82,37 +82,36 @@ func (s *SpatialPartition) QueryEntities(boundingBox collider.BoundingBox) []Ent
 }
 
 func (s *SpatialPartition) IndexEntities(entityList []Entity) {
-	s.Partitions = initializePartitions(s.PartitionDimension, s.PartitionCount)
+	// s.Partitions = initializePartitions(s.PartitionDimension, s.PartitionCount)
+	// for _, entity := range entityList {
+	// 	boundingBox := entity.BoundingBox()
+	// 	newPartitions := s.IntersectingPartitions(boundingBox)
+	// 	for _, partitionKey := range newPartitions {
+	// 		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
+	// 		partition.entities[entity.GetID()] = entity
+	// 		// partition.entities = append(partition.entities, entity)
+	// 	}
+	// }
 	for _, entity := range entityList {
+		// remove from old partitions
+		oldPartitions := s.entityPartitionCache[entity.GetID()]
+		for partitionKey := range oldPartitions {
+			partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
+			delete(partition.entities, entity.GetID())
+		}
+
+		// add to new partitions
 		boundingBox := entity.BoundingBox()
 		newPartitions := s.IntersectingPartitions(boundingBox)
 		for _, partitionKey := range newPartitions {
 			partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
 			partition.entities[entity.GetID()] = entity
-			// partition.entities = append(partition.entities, entity)
+			if _, ok := s.entityPartitionCache[entity.GetID()]; !ok {
+				s.entityPartitionCache[entity.GetID()] = map[PartitionKey]any{}
+			}
+			s.entityPartitionCache[entity.GetID()][partition.Key] = partitionKey
 		}
 	}
-	// for _, entity := range entityList {
-	// 	boundingBox := entity.BoundingBox()
-	// 	oldPartitions := s.entityPartitionCache[entity.GetID()]
-	// 	newPartitions := s.IntersectingPartitions(boundingBox)
-
-	// 	// remove from old partitions
-	// 	for partitionKey := range oldPartitions {
-	// 		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
-	// 		delete(partition.entities, entity.GetID())
-	// 	}
-
-	// 	// add to new partitions
-	// 	for _, partitionKey := range newPartitions {
-	// 		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
-	// 		partition.entities[entity.GetID()] = entity
-	// 		if _, ok := s.entityPartitionCache[entity.GetID()]; !ok {
-	// 			s.entityPartitionCache[entity.GetID()] = map[PartitionKey]any{}
-	// 		}
-	// 		s.entityPartitionCache[entity.GetID()][partition.Key] = partitionKey
-	// 	}
-	// }
 }
 
 func initializePartitions(partitionDimension int, partitionCount int) [][][]Partition {
