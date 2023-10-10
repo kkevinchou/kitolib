@@ -64,6 +64,11 @@ func CheckCollisionCapsuleTriangle(capsule collider.Capsule, triangle collider.T
 		triangle,
 	)
 
+	if closestPointsDistance == 0 {
+		// separating vector of length 0
+		return nil
+	}
+
 	if closestPointsDistance < capsule.Radius {
 		separatingDistance := capsule.Radius - closestPointsDistance
 		separatingVec := closestPoints[0].Sub(closestPoints[1]).Normalize().Mul(separatingDistance)

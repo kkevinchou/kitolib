@@ -16,7 +16,7 @@ type Entity interface {
 type Partition struct {
 	Key      PartitionKey
 	AABB     collider.BoundingBox
-	entities []Entity
+	entities map[int]Entity
 }
 
 func (p *Partition) String() string {
@@ -26,11 +26,11 @@ func (p *Partition) String() string {
 type PartitionKey [3]int
 
 type SpatialPartition struct {
-	Partitions         [][][]*Partition
+	Partitions         [][][]Partition
 	PartitionDimension int
 	PartitionCount     int
 
-	entityPartitionCache map[int][]*Partition
+	entityPartitionCache map[int]map[PartitionKey]any
 }
 
 // NewSpatialPartition creates a spatial partition with the bottom at <0, 0, 0>
@@ -38,12 +38,23 @@ type SpatialPartition struct {
 // d = partitionDimension * partitionCount
 // <-d, 0, -d> to <d, 2 * d, d>
 func NewSpatialPartition(partitionDimension int, partitionCount int) *SpatialPartition {
-	return &SpatialPartition{
-		Partitions:           initializePartitions(partitionDimension, partitionCount),
-		PartitionDimension:   partitionDimension,
-		PartitionCount:       partitionCount,
-		entityPartitionCache: map[int][]*Partition{},
+	s := &SpatialPartition{
+		PartitionDimension: partitionDimension,
+		PartitionCount:     partitionCount,
 	}
+
+	s.initialize()
+
+	return s
+}
+
+func (s *SpatialPartition) initialize() {
+	s.Partitions = initializePartitions(s.PartitionDimension, s.PartitionCount)
+	s.entityPartitionCache = map[int]map[PartitionKey]any{}
+}
+
+func (s *SpatialPartition) Clear() {
+	s.initialize()
 }
 
 // QueryEntities queries for entities that exist in partitions that the boundingBox is a part of
@@ -57,9 +68,9 @@ func (s *SpatialPartition) QueryEntities(boundingBox collider.BoundingBox) []Ent
 	seen := map[int]bool{}
 	candidates := []Entity{}
 
-	for _, p := range partitions {
-		entities := p.entities
-		for _, e := range entities {
+	for _, partitionKey := range partitions {
+		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
+		for _, e := range partition.entities {
 			if _, ok := seen[e.GetID()]; !ok {
 				seen[e.GetID()] = true
 				candidates = append(candidates, e)
@@ -71,47 +82,54 @@ func (s *SpatialPartition) QueryEntities(boundingBox collider.BoundingBox) []Ent
 }
 
 func (s *SpatialPartition) IndexEntities(entityList []Entity) {
+	s.Partitions = initializePartitions(s.PartitionDimension, s.PartitionCount)
 	for _, entity := range entityList {
 		boundingBox := entity.BoundingBox()
-		oldPartitions := s.entityPartitionCache[entity.GetID()]
 		newPartitions := s.IntersectingPartitions(boundingBox)
-
-		// remove from old partitions
-		for _, partition := range oldPartitions {
-			newEntitiesList := make([]Entity, len(partition.entities)-1)
-			index := 0
-			for _, e := range partition.entities {
-				if e.GetID() != entity.GetID() {
-					newEntitiesList[index] = e
-					index++
-				}
-			}
-			partition.entities = newEntitiesList
+		for _, partitionKey := range newPartitions {
+			partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
+			partition.entities[entity.GetID()] = entity
+			// partition.entities = append(partition.entities, entity)
 		}
-
-		// add to new partitions
-		for _, partition := range newPartitions {
-			partition.entities = append(partition.entities, entity)
-		}
-
-		s.entityPartitionCache[entity.GetID()] = newPartitions
 	}
+	// for _, entity := range entityList {
+	// 	boundingBox := entity.BoundingBox()
+	// 	oldPartitions := s.entityPartitionCache[entity.GetID()]
+	// 	newPartitions := s.IntersectingPartitions(boundingBox)
+
+	// 	// remove from old partitions
+	// 	for partitionKey := range oldPartitions {
+	// 		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
+	// 		delete(partition.entities, entity.GetID())
+	// 	}
+
+	// 	// add to new partitions
+	// 	for _, partitionKey := range newPartitions {
+	// 		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
+	// 		partition.entities[entity.GetID()] = entity
+	// 		if _, ok := s.entityPartitionCache[entity.GetID()]; !ok {
+	// 			s.entityPartitionCache[entity.GetID()] = map[PartitionKey]any{}
+	// 		}
+	// 		s.entityPartitionCache[entity.GetID()][partition.Key] = partitionKey
+	// 	}
+	// }
 }
 
-func initializePartitions(partitionDimension int, partitionCount int) [][][]*Partition {
+func initializePartitions(partitionDimension int, partitionCount int) [][][]Partition {
 	d := partitionDimension * partitionCount
-	partitions := make([][][]*Partition, partitionCount)
+	partitions := make([][][]Partition, partitionCount)
 	for i := 0; i < partitionCount; i++ {
-		partitions[i] = make([][]*Partition, partitionCount)
+		partitions[i] = make([][]Partition, partitionCount)
 		for j := 0; j < partitionCount; j++ {
-			partitions[i][j] = make([]*Partition, partitionCount)
+			partitions[i][j] = make([]Partition, partitionCount)
 			for k := 0; k < partitionCount; k++ {
-				partitions[i][j][k] = &Partition{
+				partitions[i][j][k] = Partition{
 					Key: PartitionKey{i, j, k},
 					AABB: collider.BoundingBox{
 						MinVertex: mgl64.Vec3{float64(i*partitionDimension - d/2), float64(j*partitionDimension - d/2), float64(k*partitionDimension - d/2)},
 						MaxVertex: mgl64.Vec3{float64((i+1)*partitionDimension - d/2), float64((j+1)*partitionDimension - d/2), float64((k+1)*partitionDimension - d/2)},
 					},
+					entities: map[int]Entity{},
 				}
 			}
 		}
@@ -119,7 +137,7 @@ func initializePartitions(partitionDimension int, partitionCount int) [][][]*Par
 	return partitions
 }
 
-func (s *SpatialPartition) IntersectingPartitions(boundingBox collider.BoundingBox) []*Partition {
+func (s *SpatialPartition) IntersectingPartitions(boundingBox collider.BoundingBox) []PartitionKey {
 	i1, j1, k1, found1 := s.VertexToPartitionClamped(boundingBox.MinVertex, true, false)
 	if !found1 {
 		return nil
@@ -130,11 +148,11 @@ func (s *SpatialPartition) IntersectingPartitions(boundingBox collider.BoundingB
 		return nil
 	}
 
-	partitions := []*Partition{}
+	var partitions []PartitionKey
 	for i := 0; i <= i2-i1; i++ {
 		for j := 0; j <= j2-j1; j++ {
 			for k := 0; k <= k2-k1; k++ {
-				partitions = append(partitions, s.Partitions[i1+i][j1+j][k1+k])
+				partitions = append(partitions, s.Partitions[i1+i][j1+j][k1+k].Key)
 			}
 		}
 	}
