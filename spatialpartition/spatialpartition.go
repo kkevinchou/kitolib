@@ -31,6 +31,9 @@ type SpatialPartition struct {
 	PartitionCount     int
 
 	entityPartitionCache map[int]map[PartitionKey]any
+
+	// pool partition keys to avoid reallocating new arrays and resizing slices
+	pooledPartitionKeys []PartitionKey
 }
 
 // NewSpatialPartition creates a spatial partition with the bottom at <0, 0, 0>
@@ -39,8 +42,9 @@ type SpatialPartition struct {
 // <-d, 0, -d> to <d, 2 * d, d>
 func NewSpatialPartition(partitionDimension int, partitionCount int) *SpatialPartition {
 	s := &SpatialPartition{
-		PartitionDimension: partitionDimension,
-		PartitionCount:     partitionCount,
+		PartitionDimension:  partitionDimension,
+		PartitionCount:      partitionCount,
+		pooledPartitionKeys: make([]PartitionKey, partitionCount*partitionCount*partitionCount),
 	}
 
 	s.initialize()
@@ -137,16 +141,21 @@ func (s *SpatialPartition) IntersectingPartitions(boundingBox collider.BoundingB
 		return nil
 	}
 
-	var partitions []PartitionKey
+	index := -1
 	for i := 0; i <= i2-i1; i++ {
 		for j := 0; j <= j2-j1; j++ {
 			for k := 0; k <= k2-k1; k++ {
-				partitions = append(partitions, s.Partitions[i1+i][j1+j][k1+k].Key)
+				index += 1
+				s.pooledPartitionKeys[index] = PartitionKey{i1 + i, j1 + j, k1 + k}
 			}
 		}
 	}
 
-	return partitions
+	if index == -1 {
+		return nil
+	}
+
+	return s.pooledPartitionKeys[0 : index+1]
 }
 
 func (s *SpatialPartition) calcMinPartitionVertex() mgl64.Vec3 {
