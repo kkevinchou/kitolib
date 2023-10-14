@@ -220,3 +220,11 @@ func (s *SpatialPartition) VertexToPartitionClamped(vertex mgl64.Vec3, clampMin,
 
 	return i, j, k, true
 }
+
+func (s *SpatialPartition) DeleteEntity(entityID int) {
+	partitions := s.entityPartitionCache[entityID]
+	for partitionKey := range partitions {
+		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
+		delete(partition.entities, entityID)
+	}
+}
