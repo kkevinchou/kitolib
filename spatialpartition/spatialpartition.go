@@ -31,6 +31,7 @@ type SpatialPartition struct {
 	PartitionCount     int
 
 	entityPartitionCache map[int]map[PartitionKey]any
+	entityPositionCache  map[int]mgl64.Vec3
 
 	// pool partition keys to avoid reallocating new arrays and resizing slices
 	pooledPartitionKeys []PartitionKey
@@ -42,9 +43,8 @@ type SpatialPartition struct {
 // <-d, 0, -d> to <d, 2 * d, d>
 func NewSpatialPartition(partitionDimension int, partitionCount int) *SpatialPartition {
 	s := &SpatialPartition{
-		PartitionDimension:  partitionDimension,
-		PartitionCount:      partitionCount,
-		pooledPartitionKeys: make([]PartitionKey, partitionCount*partitionCount*partitionCount),
+		PartitionDimension: partitionDimension,
+		PartitionCount:     partitionCount,
 	}
 
 	s.initialize()
@@ -54,7 +54,9 @@ func NewSpatialPartition(partitionDimension int, partitionCount int) *SpatialPar
 
 func (s *SpatialPartition) initialize() {
 	s.Partitions = initializePartitions(s.PartitionDimension, s.PartitionCount)
+	s.pooledPartitionKeys = make([]PartitionKey, s.PartitionCount*s.PartitionCount*s.PartitionCount)
 	s.entityPartitionCache = map[int]map[PartitionKey]any{}
+	s.entityPositionCache = map[int]mgl64.Vec3{}
 }
 
 func (s *SpatialPartition) Clear() {
@@ -87,6 +89,13 @@ func (s *SpatialPartition) QueryEntities(boundingBox collider.BoundingBox) []Ent
 
 func (s *SpatialPartition) IndexEntities(entityList []Entity) {
 	for _, entity := range entityList {
+		if position, ok := s.entityPositionCache[entity.GetID()]; ok {
+			if position == entity.Position() {
+				continue
+			}
+		}
+		s.entityPositionCache[entity.GetID()] = entity.Position()
+
 		// remove from old partitions
 		oldPartitions := s.entityPartitionCache[entity.GetID()]
 		for partitionKey := range oldPartitions {
@@ -197,15 +206,15 @@ func (s *SpatialPartition) VertexToPartitionClamped(vertex mgl64.Vec3, clampMin,
 
 	maxDelta := vertex.Sub(maxPartitionVertex)
 	if clampMax {
-		if maxDelta.X() > 0 {
+		if maxDelta.X() >= 0 {
 			i = s.PartitionCount - 1
 			clampI = true
 		}
-		if maxDelta.Y() > 0 {
+		if maxDelta.Y() >= 0 {
 			j = s.PartitionCount - 1
 			clampJ = true
 		}
-		if maxDelta.Z() > 0 {
+		if maxDelta.Z() >= 0 {
 			k = s.PartitionCount - 1
 			clampK = true
 		}
@@ -235,5 +244,7 @@ func (s *SpatialPartition) DeleteEntity(entityID int) {
 	for partitionKey := range partitions {
 		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
 		delete(partition.entities, entityID)
+		delete(s.entityPartitionCache, entityID)
+		delete(s.entityPositionCache, entityID)
 	}
 }
