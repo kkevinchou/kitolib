@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 type Capsule struct {
@@ -21,9 +22,14 @@ func NewCapsule(top, bottom mgl64.Vec3, radius float64) Capsule {
 }
 
 func (c Capsule) Transform(transform mgl64.Mat4) Capsule {
-	newTop := transform.Mul4x1(c.Top.Vec4(1)).Vec3()
-	newBottom := transform.Mul4x1(c.Bottom.Vec4(1)).Vec3()
-	return NewCapsule(newTop, newBottom, c.Radius)
+	top := transform.Mul4x1(c.Top.Vec4(1)).Vec3()
+	bottom := transform.Mul4x1(c.Bottom.Vec4(1)).Vec3()
+	_, _, scaleVec := utils.DecomposeF64(transform)
+
+	scale := math.Max(scaleVec[0], math.Max(scaleVec[1], scaleVec[2]))
+
+	// assume universal scale
+	return NewCapsule(top, bottom, c.Radius*scale)
 }
 
 // func NewCapsuleFromModel(model *model.Model) Capsule {
