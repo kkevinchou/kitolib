@@ -77,6 +77,9 @@ const (
 	KeyboardKeyTick KeyboardKey = "`"
 	KeyboardKeyF1   KeyboardKey = "F1"
 	KeyboardKeyF2   KeyboardKey = "F2"
+	KeyboardKeyF3   KeyboardKey = "F3"
+	KeyboardKeyF4   KeyboardKey = "F4"
+	KeyboardKeyF5   KeyboardKey = "F5"
 
 	KeyboardEventUp = iota
 	KeyboardEventDown
