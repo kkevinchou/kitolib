@@ -99,8 +99,8 @@ func ClosestPointRayVsPoint(origin mgl64.Vec3, dir mgl64.Vec3, point mgl64.Vec3)
 // segment endpoint Q and plane of triangle (when Q projects inside ABC)
 
 // the first point belongs to the triangle, the second point belongs to the line
-func ClosestPointsLineVSTriangle(line collider.Line, triangle collider.Triangle) ([]mgl64.Vec3, float64) {
-	var closestPoints []mgl64.Vec3
+func ClosestPointsLineVSTriangle(line collider.Line, triangle collider.Triangle) ([2]mgl64.Vec3, float64) {
+	var closestPoints [2]mgl64.Vec3
 	var closestDistance float64
 
 	a := triangle.Points[0]
@@ -128,7 +128,7 @@ func ClosestPointsLineVSTriangle(line collider.Line, triangle collider.Triangle)
 		p1Dist := line.P1.Sub(p1Projection).Len()
 		if p1Dist < closestDistance {
 			closestDistance = p1Dist
-			closestPoints = []mgl64.Vec3{line.P1, p1Projection}
+			closestPoints = [2]mgl64.Vec3{line.P1, p1Projection}
 		}
 	}
 
@@ -137,7 +137,7 @@ func ClosestPointsLineVSTriangle(line collider.Line, triangle collider.Triangle)
 		p2Dist := line.P2.Sub(p2Projection).Len()
 		if p2Dist < closestDistance {
 			closestDistance = p2Dist
-			closestPoints = []mgl64.Vec3{line.P2, p2Projection}
+			closestPoints = [2]mgl64.Vec3{line.P2, p2Projection}
 		}
 	}
 
@@ -146,7 +146,7 @@ func ClosestPointsLineVSTriangle(line collider.Line, triangle collider.Triangle)
 
 // Real Time Collision Detection - page 149
 // Some wacky math stuff.
-func ClosestPointsLineVSLine(line1 collider.Line, line2 collider.Line) ([]mgl64.Vec3, float64) {
+func ClosestPointsLineVSLine(line1 collider.Line, line2 collider.Line) ([2]mgl64.Vec3, float64) {
 	p1 := line1.P1
 	q1 := line1.P2
 	p2 := line2.P1
@@ -162,7 +162,7 @@ func ClosestPointsLineVSLine(line1 collider.Line, line2 collider.Line) ([]mgl64.
 
 	// check if either or both lines degenerate into points
 	if a <= epsilon && e <= epsilon {
-		return []mgl64.Vec3{p1, p2}, p1.Sub(p2).Len()
+		return [2]mgl64.Vec3{p1, p2}, p1.Sub(p2).Len()
 	}
 
 	var s, t float64
@@ -201,7 +201,7 @@ func ClosestPointsLineVSLine(line1 collider.Line, line2 collider.Line) ([]mgl64.
 
 	c1 := p1.Add(d1.Mul(s))
 	c2 := p2.Add(d2.Mul(t))
-	return []mgl64.Vec3{c1, c2}, c1.Sub(c2).Len()
+	return [2]mgl64.Vec3{c1, c2}, c1.Sub(c2).Len()
 }
 
 func ProjectPointOnTriangle(point mgl64.Vec3, triangle collider.Triangle) (mgl64.Vec3, bool) {

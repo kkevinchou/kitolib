@@ -32,15 +32,7 @@ func (c Capsule) Transform(transform mgl64.Mat4) Capsule {
 	return NewCapsule(top, bottom, c.Radius*scale)
 }
 
-// func NewCapsuleFromModel(model *model.Model) Capsule {
-// var vertices []mgl64.Vec3
-// for _, vertex := range model.Vertices() {
-// 	vertices = append(vertices, utils.Vec3F32ToF64(vertex.Position))
-// }
-// return NewCapsuleFromVertices(vertices)
-// }
-
-// CreateCapsuleFromMesh creates a capsule centered at the model space origin
+// NewCapsuleFromVertices creates a capsule centered at the model space origin
 func NewCapsuleFromVertices(vertices []mgl64.Vec3) Capsule {
 	var minX, minY, minZ, maxX, maxY, maxZ float64
 
