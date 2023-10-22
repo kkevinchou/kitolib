@@ -16,7 +16,7 @@ type AnimationSpec struct {
 // KeyFrame contains a "Pose" which is the mapping from joint index to
 // the transformations that should be applied to the joint for this pose
 type KeyFrame struct {
-	Pose  map[int]*JointTransform
+	Pose  map[int]JointTransform
 	Start time.Duration
 }
 
@@ -28,8 +28,8 @@ type JointTransform struct {
 	Scale       mgl32.Vec3
 }
 
-func NewDefaultJointTransform() *JointTransform {
-	return &JointTransform{
+func NewDefaultJointTransform() JointTransform {
+	return JointTransform{
 		Translation: mgl32.Vec3{0, 0, 0},
 		Rotation:    mgl32.QuatIdent(),
 		Scale:       mgl32.Vec3{1, 1, 1},

@@ -191,12 +191,12 @@ func (player *AnimationPlayer) Update(delta time.Duration) {
 	player.update()
 }
 
-func (player *AnimationPlayer) calcPose(elapsedTime time.Duration, animation *modelspec.AnimationSpec) map[int]*modelspec.JointTransform {
+func (player *AnimationPlayer) calcPose(elapsedTime time.Duration, animation *modelspec.AnimationSpec) map[int]modelspec.JointTransform {
 	pose := calculateCurrentAnimationPose(elapsedTime, animation.KeyFrames)
 	return pose
 }
 
-func (player *AnimationPlayer) computeAnimationTransforms(pose map[int]*modelspec.JointTransform) map[int]mgl32.Mat4 {
+func (player *AnimationPlayer) computeAnimationTransforms(pose map[int]modelspec.JointTransform) map[int]mgl32.Mat4 {
 	poseTransforms := convertPoseToTransformMatrix(pose)
 	animationTransforms := computeJointTransforms(player.rootJoint, poseTransforms)
 	return animationTransforms
@@ -231,7 +231,7 @@ func computeJointTransformsHelper(joint *modelspec.JointSpec, parentTransform mg
 	transforms[joint.ID] = poseTransform.Mul4(joint.InverseBindTransform)
 }
 
-func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*modelspec.KeyFrame) map[int]*modelspec.JointTransform {
+func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*modelspec.KeyFrame) map[int]modelspec.JointTransform {
 	var startKeyFrame *modelspec.KeyFrame
 	var endKeyFrame *modelspec.KeyFrame
 	var progression float32
@@ -258,7 +258,7 @@ func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*model
 	return interpolatePoses(startKeyFrame.Pose, endKeyFrame.Pose, progression)
 }
 
-func convertPoseToTransformMatrix(pose map[int]*modelspec.JointTransform) map[int]mgl32.Mat4 {
+func convertPoseToTransformMatrix(pose map[int]modelspec.JointTransform) map[int]mgl32.Mat4 {
 	transformMatrices := map[int]mgl32.Mat4{}
 	for jointID, transform := range pose {
 		translation := transform.Translation
@@ -269,7 +269,7 @@ func convertPoseToTransformMatrix(pose map[int]*modelspec.JointTransform) map[in
 	return transformMatrices
 }
 
-func interpolatePoses(j1, j2 map[int]*modelspec.JointTransform, progression float32) map[int]*modelspec.JointTransform {
+func interpolatePoses(j1, j2 map[int]modelspec.JointTransform, progression float32) map[int]modelspec.JointTransform {
 	if progression > 1 {
 		progression = 1
 	}
@@ -278,7 +278,7 @@ func interpolatePoses(j1, j2 map[int]*modelspec.JointTransform, progression floa
 		progression = 0
 	}
 
-	interpolatedPose := map[int]*modelspec.JointTransform{}
+	interpolatedPose := map[int]modelspec.JointTransform{}
 	for jointID := range j1 {
 		k1JointTransform := j1[jointID]
 		k2JointTransform := j2[jointID]
@@ -291,7 +291,7 @@ func interpolatePoses(j1, j2 map[int]*modelspec.JointTransform, progression floa
 		scale := k1JointTransform.Scale.Add(k2JointTransform.Scale.Sub(k1JointTransform.Scale).Mul(progression))
 
 		// interpolatedPose[jointID] = mgl32.Translate3D(translation.X(), translation.Y(), translation.Z()).Mul4(rotation).Mul4(mgl32.Scale3D(scale.X(), scale.Y(), scale.Z()))
-		interpolatedPose[jointID] = &modelspec.JointTransform{
+		interpolatedPose[jointID] = modelspec.JointTransform{
 			Translation: translation,
 			Rotation:    rotation,
 			Scale:       scale,

@@ -242,7 +242,7 @@ func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJo
 		// hacky way to keep precision on tiny fractional seconds
 		keyFrames[timestamp] = &modelspec.KeyFrame{
 			Start: time.Duration(timestamp*1000) * time.Millisecond,
-			Pose:  map[int]*modelspec.JointTransform{},
+			Pose:  map[int]modelspec.JointTransform{},
 		}
 		for _, jointID := range allJointIDs {
 			keyFrames[timestamp].Pose[jointID] = modelspec.NewDefaultJointTransform()
@@ -307,10 +307,14 @@ func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJo
 			for i, ts := range allTimestamps {
 				if timestamps[localCursor] != ts {
 					lastTS := allTimestamps[i-1]
-					keyFrames[ts].Pose[jointID].Translation = keyFrames[lastTS].Pose[jointID].Translation
+					pose := keyFrames[ts].Pose[jointID]
+					pose.Translation = keyFrames[lastTS].Pose[jointID].Translation
+					keyFrames[ts].Pose[jointID] = pose
 				} else {
 					f32Output := f32OutputValues[localCursor]
-					keyFrames[ts].Pose[jointID].Translation = mgl32.Vec3{f32Output[0], f32Output[1], f32Output[2]}
+					pose := keyFrames[ts].Pose[jointID]
+					pose.Translation = mgl32.Vec3{f32Output[0], f32Output[1], f32Output[2]}
+					keyFrames[ts].Pose[jointID] = pose
 					localCursor++
 				}
 			}
@@ -335,10 +339,14 @@ func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJo
 			for i, ts := range allTimestamps {
 				if timestamps[localCursor] != ts {
 					lastTS := allTimestamps[i-1]
-					keyFrames[ts].Pose[jointID].Rotation = keyFrames[lastTS].Pose[jointID].Rotation
+					pose := keyFrames[ts].Pose[jointID]
+					pose.Rotation = keyFrames[lastTS].Pose[jointID].Rotation
+					keyFrames[ts].Pose[jointID] = pose
 				} else {
 					f32Output := f32OutputValues[localCursor]
-					keyFrames[ts].Pose[jointID].Rotation = mgl32.Quat{V: mgl32.Vec3{f32Output[0], f32Output[1], f32Output[2]}, W: f32Output[3]}
+					pose := keyFrames[ts].Pose[jointID]
+					pose.Rotation = mgl32.Quat{V: mgl32.Vec3{f32Output[0], f32Output[1], f32Output[2]}, W: f32Output[3]}
+					keyFrames[ts].Pose[jointID] = pose
 					localCursor++
 				}
 			}
@@ -364,10 +372,14 @@ func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJo
 				// local cursor is ahead, backfill the transform
 				if timestamps[localCursor] != ts {
 					lastTS := allTimestamps[i-1]
-					keyFrames[ts].Pose[jointID].Scale = keyFrames[lastTS].Pose[jointID].Scale
+					pose := keyFrames[ts].Pose[jointID]
+					pose.Scale = keyFrames[lastTS].Pose[jointID].Scale
+					keyFrames[ts].Pose[jointID] = pose
 				} else {
 					f32Output := f32OutputValues[localCursor]
-					keyFrames[ts].Pose[jointID].Scale = mgl32.Vec3{f32Output[0], f32Output[1], f32Output[2]}
+					pose := keyFrames[ts].Pose[jointID]
+					pose.Scale = mgl32.Vec3{f32Output[0], f32Output[1], f32Output[2]}
+					keyFrames[ts].Pose[jointID] = pose
 					localCursor++
 				}
 			}
