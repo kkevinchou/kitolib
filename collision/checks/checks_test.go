@@ -264,3 +264,21 @@ func TestParallelInfiniteLineVSLinePointingOverlap(t *testing.T) {
 		t.Errorf("expected %v but instead got %v", expectedPoint, b)
 	}
 }
+
+func TestProjectPointOnPlane(t *testing.T) {
+	plane := collider.Plane{Point: mgl64.Vec3{}, Normal: mgl64.Vec3{0, 1, 0}}
+	point := mgl64.Vec3{100, 100, 0}
+	projectedPoint := checks.ProjectPointOnPlane(point, plane)
+
+	expectedProjectedPoint := mgl64.Vec3{100, 0, 0}
+	if expectedProjectedPoint != projectedPoint {
+		t.Errorf("expected %v but instead got %v", expectedProjectedPoint, projectedPoint)
+	}
+
+	point = mgl64.Vec3{100, -100, 0}
+	projectedPoint = checks.ProjectPointOnPlane(point, plane)
+	expectedProjectedPoint = mgl64.Vec3{100, 0, 0}
+	if expectedProjectedPoint != projectedPoint {
+		t.Errorf("expected %v but instead got %v", expectedProjectedPoint, projectedPoint)
+	}
+}
