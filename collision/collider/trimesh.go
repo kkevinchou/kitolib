@@ -12,18 +12,18 @@ type Mesh interface {
 
 type Triangle struct {
 	Normal mgl64.Vec3
-	Points []mgl64.Vec3
+	Points [3]mgl64.Vec3
 }
 
 func (t Triangle) Transform(transform mgl64.Mat4) Triangle {
-	return NewTriangle([]mgl64.Vec3{
+	return NewTriangle([3]mgl64.Vec3{
 		transform.Mul4x1(t.Points[0].Vec4(1)).Vec3(),
 		transform.Mul4x1(t.Points[1].Vec4(1)).Vec3(),
 		transform.Mul4x1(t.Points[2].Vec4(1)).Vec3(),
 	})
 }
 
-func NewTriangle(points []mgl64.Vec3) Triangle {
+func NewTriangle(points [3]mgl64.Vec3) Triangle {
 	seg1 := points[1].Sub(points[0])
 	seg2 := points[2].Sub(points[0])
 	normal := seg1.Cross(seg2).Normalize()
@@ -61,55 +61,6 @@ func (t TriMesh) Transform(transform mgl64.Mat4) TriMesh {
 // 	return triMesh
 // }
 
-func NewBoxTriMesh(w, l, h float64) TriMesh {
-	halfW := w / 2
-	halfL := l / 2
-	triMesh := TriMesh{}
-	// front
-	triMesh.Triangles = append(triMesh.Triangles, NewTriangle(
-		[]mgl64.Vec3{{-halfW, 0, halfL}, {halfW, 0, halfL}, {halfW, h, halfL}},
-	))
-	triMesh.Triangles = append(triMesh.Triangles, NewTriangle(
-		[]mgl64.Vec3{{halfW, h, halfL}, {-halfW, h, halfL}, {-halfW, 0, halfL}},
-	))
-	// back
-	triMesh.Triangles = append(triMesh.Triangles, NewTriangle(
-		[]mgl64.Vec3{{halfW, 0, -halfL}, {-halfW, 0, -halfL}, {-halfW, h, -halfL}},
-	))
-	triMesh.Triangles = append(triMesh.Triangles, NewTriangle(
-		[]mgl64.Vec3{{-halfW, h, -halfL}, {halfW, h, -halfL}, {halfW, 0, -halfL}},
-	))
-	// left
-	triMesh.Triangles = append(triMesh.Triangles, NewTriangle(
-		[]mgl64.Vec3{{-halfW, 0, -halfL}, {-halfW, 0, halfL}, {-halfW, h, halfL}},
-	))
-	triMesh.Triangles = append(triMesh.Triangles, NewTriangle(
-		[]mgl64.Vec3{{-halfW, h, halfL}, {-halfW, h, -halfL}, {-halfW, 0, -halfL}},
-	))
-	// right
-	triMesh.Triangles = append(triMesh.Triangles, NewTriangle(
-		[]mgl64.Vec3{{halfW, 0, halfL}, {halfW, 0, -halfL}, {halfW, h, -halfL}},
-	))
-	triMesh.Triangles = append(triMesh.Triangles, NewTriangle(
-		[]mgl64.Vec3{{halfW, h, -halfL}, {halfW, h, halfL}, {halfW, 0, halfL}},
-	))
-	// bottom
-	triMesh.Triangles = append(triMesh.Triangles, NewTriangle(
-		[]mgl64.Vec3{{halfW, 0, halfL}, {-halfW, 0, halfL}, {-halfW, 0, halfL}},
-	))
-	triMesh.Triangles = append(triMesh.Triangles, NewTriangle(
-		[]mgl64.Vec3{{-halfW, 0, halfL}, {halfW, 0, -halfL}, {halfW, 0, halfL}},
-	))
-	// top
-	triMesh.Triangles = append(triMesh.Triangles, NewTriangle(
-		[]mgl64.Vec3{{-halfW, h, halfL}, {halfW, h, halfL}, {halfW, h, -halfL}},
-	))
-	triMesh.Triangles = append(triMesh.Triangles, NewTriangle(
-		[]mgl64.Vec3{{halfW, h, -halfL}, {-halfW, h, -halfL}, {-halfW, h, halfL}},
-	))
-	return triMesh
-}
-
 func CreateTriMeshFromPrimitives(primitives []*modelspec.PrimitiveSpecification) *TriMesh {
 	triMesh := TriMesh{}
 
@@ -119,7 +70,11 @@ func CreateTriMeshFromPrimitives(primitives []*modelspec.PrimitiveSpecification)
 			v1 := p.Vertices[i+1]
 			v2 := p.Vertices[i+2]
 
-			triVerts := utils.ModelSpecVertsToVec3([]modelspec.Vertex{v0, v1, v2})
+			triVerts := [3]mgl64.Vec3{
+				utils.Vec3F32ToF64(v0.Position),
+				utils.Vec3F32ToF64(v1.Position),
+				utils.Vec3F32ToF64(v2.Position),
+			}
 
 			vec1 := triVerts[1].Sub(triVerts[0])
 			vec2 := triVerts[2].Sub(triVerts[1])
