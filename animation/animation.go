@@ -177,8 +177,8 @@ func (player *AnimationPlayer) Update(delta time.Duration) {
 	player.blendAnimationElapsedTime += delta
 	player.blendDurationSoFar += delta
 
-	for player.elapsedTime.Milliseconds() > player.currentAnimation.Length.Milliseconds() {
-		player.elapsedTime = time.Duration(player.elapsedTime.Milliseconds()-player.currentAnimation.Length.Milliseconds()) * time.Millisecond
+	for player.elapsedTime > player.currentAnimation.Length {
+		player.elapsedTime = player.elapsedTime - player.currentAnimation.Length
 
 		// if we're not looping, we should have a secondary animation to fall back into
 		if !player.loop {
@@ -238,19 +238,25 @@ func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*model
 
 	// iterate backwards looking for the starting keyframe
 	for i := len(keyFrames) - 1; i >= 0; i-- {
-		keyFrame := keyFrames[i]
-		if elapsedTime >= keyFrame.Start || i == 0 {
-			startKeyFrame = keyFrame
-			if i < len(keyFrames)-1 {
-				endKeyFrame = keyFrames[i+1]
-				progression = float32((elapsedTime - startKeyFrame.Start).Milliseconds()) / float32((endKeyFrame.Start - startKeyFrame.Start).Milliseconds())
-			} else {
-				// interpolate towards the first kf, assume looping animations
-				endKeyFrame = keyFrames[0]
-				progression = 0
-			}
-			break
+		var startKeyFrameIndex int
+		if elapsedTime >= keyFrames[i].Start {
+			startKeyFrameIndex = i
+		} else if i == 0 {
+			startKeyFrameIndex = len(keyFrames) - 1
+		} else {
+			continue
 		}
+		endKeyFrameIndex := (startKeyFrameIndex + 1) % len(keyFrames)
+
+		startKeyFrame = keyFrames[startKeyFrameIndex]
+		endKeyFrame = keyFrames[endKeyFrameIndex]
+		startKeyFrameTimestamp := startKeyFrame.Start
+		if startKeyFrameIndex > endKeyFrameIndex {
+			// handle case where we're looping from the last key frame
+			startKeyFrameTimestamp = 0
+		}
+		progression = float32(elapsedTime-startKeyFrameTimestamp) / float32((endKeyFrame.Start - startKeyFrameTimestamp))
+		break
 	}
 
 	// progression = 0
