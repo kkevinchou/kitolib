@@ -80,6 +80,11 @@ const (
 	KeyboardKeyF3   KeyboardKey = "F3"
 	KeyboardKeyF4   KeyboardKey = "F4"
 	KeyboardKeyF5   KeyboardKey = "F5"
+	KeyboardKeyF6   KeyboardKey = "F6"
+	KeyboardKeyF7   KeyboardKey = "F7"
+	KeyboardKeyF8   KeyboardKey = "F8"
+	KeyboardKeyF9   KeyboardKey = "F9"
+	KeyboardKeyF10  KeyboardKey = "F10"
 
 	KeyboardEventUp = iota
 	KeyboardEventDown
