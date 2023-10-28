@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/kkevinchou/kitolib/assets/assetslog"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/qmuntal/gltf"
 	"github.com/qmuntal/gltf/modeler"
@@ -83,7 +84,7 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 		mat := mgl32.QuatRotate(mgl32.DegToRad(180), mgl32.Vec3{0, 0, -1}).Mat4()
 		primitiveSpecs, err := parsePrimitiveSpecs(gltfDocument, mesh, mat, document.Textures, config)
 		if err != nil {
-			fmt.Println(err)
+			assetslog.Logger.Println(err)
 			return nil, err
 		}
 		meshSpec := &modelspec.MeshSpecification{ID: i, Primitives: primitiveSpecs}
@@ -497,7 +498,7 @@ func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, parentTransfo
 	var primitiveSpecs []*modelspec.PrimitiveSpecification
 
 	if len(mesh.Primitives) > 1 {
-		fmt.Println(mesh.Name)
+		assetslog.Logger.Println(mesh.Name)
 	}
 
 	for _, primitive := range mesh.Primitives {
@@ -545,7 +546,7 @@ func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, parentTransfo
 				}
 
 				if len(positions) != len(primitiveSpec.UniqueVertices) {
-					fmt.Println("dafuq")
+					assetslog.Logger.Println("dafuq")
 				}
 
 				for i, position := range positions {
@@ -600,7 +601,7 @@ func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, parentTransfo
 					primitiveSpec.UniqueVertices[i].JointWeights = jointWeights
 				}
 			} else {
-				fmt.Printf("[%s] unhandled attribute %s\n", mesh.Name, attribute)
+				assetslog.Logger.Printf("[%s] unhandled attribute %s\n", mesh.Name, attribute)
 			}
 		}
 

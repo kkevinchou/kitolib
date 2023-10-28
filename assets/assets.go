@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kkevinchou/kitolib/assets/assetslog"
 	"github.com/kkevinchou/kitolib/assets/loaders"
 	"github.com/kkevinchou/kitolib/font"
 	"github.com/kkevinchou/kitolib/modelspec"
@@ -30,8 +31,8 @@ func NewAssetManager(directory string, loadVisualAssets bool) *AssetManager {
 
 	start := time.Now()
 	documents := loaders.LoadDocuments(directory)
-	fmt.Println(textureLoadTime, "to load textures")
-	fmt.Println(time.Since(start), "to load models")
+	assetslog.Logger.Println(textureLoadTime, "to load textures")
+	assetslog.Logger.Println(time.Since(start), "to load models")
 
 	assetManager := AssetManager{
 		textures:  loadedTextures,

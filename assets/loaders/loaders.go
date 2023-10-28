@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/kkevinchou/kitolib/assets/assetslog"
 	"github.com/kkevinchou/kitolib/assets/loaders/backends/opengl"
 	"github.com/kkevinchou/kitolib/assets/loaders/gltf"
 	"github.com/kkevinchou/kitolib/font"
@@ -85,7 +86,7 @@ func LoadDocuments(directory string) map[string]*modelspec.Document {
 			// }
 			document, err := gltf.ParseGLTF(metaData.Name, metaData.Path, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 			if err != nil {
-				fmt.Println("failed to parse gltf for", metaData.Path, ", error:", err)
+				assetslog.Logger.Println("failed to parse gltf for", metaData.Path, ", error:", err)
 				continue
 			}
 			scenes[metaData.Name] = document
