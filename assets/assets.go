@@ -21,11 +21,11 @@ func NewAssetManager(directory string, loadVisualAssets bool) *AssetManager {
 	var loadedTextures map[string]*textures.Texture
 	var loadedFonts map[string]font.Font
 	var textureLoadTime time.Duration
+
 	if loadVisualAssets {
 		start := time.Now()
 		loadedTextures = loaders.LoadTextures(directory)
 		textureLoadTime = time.Since(start)
-
 		loadedFonts = loaders.LoadFonts(directory)
 	}
 

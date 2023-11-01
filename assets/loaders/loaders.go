@@ -81,9 +81,6 @@ func LoadDocuments(directory string) map[string]*modelspec.Document {
 		}
 
 		if metaData.Extension == ".gltf" {
-			// if metaData.Name != "vehicle" && metaData.Name != "demo_scene_west" {
-			// 	continue
-			// }
 			document, err := gltf.ParseGLTF(metaData.Name, metaData.Path, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 			if err != nil {
 				assetslog.Logger.Println("failed to parse gltf for", metaData.Path, ", error:", err)

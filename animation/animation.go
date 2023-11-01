@@ -81,12 +81,18 @@ func (player *AnimationPlayer) PlayAnimation(animationName string) {
 		return
 	}
 
-	if currentAnimation, ok := player.animations[animationName]; ok {
-		player.currentAnimation = currentAnimation
-		player.elapsedTime = 0
-		player.blendAnimation = nil
-	} else {
-		panic(fmt.Sprintf("failed to find animation %s", animationName))
+	if player.CurrentAnimation() != animationName {
+		if player.CurrentAnimation() == "" {
+			if currentAnimation, ok := player.animations[animationName]; ok {
+				player.currentAnimation = currentAnimation
+				player.elapsedTime = 0
+				player.blendAnimation = nil
+			} else {
+				panic(fmt.Sprintf("failed to find animation %s", animationName))
+			}
+		} else {
+			player.PlayAndBlendAnimation(animationName, 250*time.Millisecond)
+		}
 	}
 }
 
