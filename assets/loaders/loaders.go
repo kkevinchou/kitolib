@@ -5,7 +5,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kkevinchou/kitolib/assets/assetslog"
 	"github.com/kkevinchou/kitolib/assets/loaders/backends/opengl"
 	"github.com/kkevinchou/kitolib/assets/loaders/gltf"
 	"github.com/kkevinchou/kitolib/font"
@@ -81,19 +80,22 @@ func LoadDocuments(directory string) map[string]*modelspec.Document {
 		}
 
 		if metaData.Extension == ".gltf" {
-			document, err := gltf.ParseGLTF(metaData.Name, metaData.Path, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
-			if err != nil {
-				assetslog.Logger.Println("failed to parse gltf for", metaData.Path, ", error:", err)
-				continue
-			}
-			scenes[metaData.Name] = document
+			scene := LoadDocument(metaData.Name, metaData.Path)
+			scenes[metaData.Name] = scene
 		} else {
 			panic(fmt.Sprintf("wtf unexpected extension %s", metaData.Extension))
 		}
-
 	}
 
 	return scenes
+}
+
+func LoadDocument(name string, filepath string) *modelspec.Document {
+	document, err := gltf.ParseGLTF(name, filepath, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+	if err != nil {
+		panic(err)
+	}
+	return document
 }
 
 func LoadFonts(directory string) map[string]font.Font {
