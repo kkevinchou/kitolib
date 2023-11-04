@@ -43,7 +43,7 @@ func TestClosestPointsLineVsTriangle(t *testing.T) {
 		P1: mgl64.Vec3{0, 1, -0.5},
 		P2: mgl64.Vec3{0, 2, -1},
 	}
-	trianglePoints := []mgl64.Vec3{
+	trianglePoints := [3]mgl64.Vec3{
 		{0, 0, 0},
 		{1, 0, -1},
 		{-1, 0, -1},
@@ -72,7 +72,7 @@ func TestClosestPointsLineVsTriangle2(t *testing.T) {
 		P1: mgl64.Vec3{0, 2, -1},
 		P2: mgl64.Vec3{0, 1, -0.5},
 	}
-	trianglePoints := []mgl64.Vec3{
+	trianglePoints := [3]mgl64.Vec3{
 		{0, 0, 0},
 		{1, 0, -1},
 		{-1, 0, -1},
@@ -100,7 +100,7 @@ func TestTriangleEdgeClosestToLine(t *testing.T) {
 		P1: mgl64.Vec3{0, -1, -2},
 		P2: mgl64.Vec3{0, 1, -2},
 	}
-	trianglePoints := []mgl64.Vec3{
+	trianglePoints := [3]mgl64.Vec3{
 		{0, 0, 0},
 		{1, 0, -1},
 		{-1, 0, -1},
@@ -130,7 +130,7 @@ func TestCheckCollisionCapsuleTriangle(t *testing.T) {
 		Bottom: mgl64.Vec3{0, 0.5, -0.5},
 	}
 
-	trianglePoints := []mgl64.Vec3{
+	trianglePoints := [3]mgl64.Vec3{
 		{0, 0, 0},
 		{1, 0, -1},
 		{-1, 0, -1},
@@ -162,7 +162,7 @@ func TestNegativeSeparatingVector(t *testing.T) {
 		Bottom: mgl64.Vec3{228.1377, 0.30595, -293.3103},
 	}
 
-	trianglePoints := []mgl64.Vec3{
+	trianglePoints := [3]mgl64.Vec3{
 		{610.2427978, 1, -731.148681},
 		{-538.179199, 1, -731.148681},
 		{-538.179199, 1, 713.603515},
@@ -180,7 +180,7 @@ func TestPartWayCapsule(t *testing.T) {
 		Bottom: mgl64.Vec3{0, 1, 0},
 	}
 
-	trianglePoints := []mgl64.Vec3{
+	trianglePoints := [3]mgl64.Vec3{
 		{5, 3, 5},
 		{0, 3, -5},
 		{-5, 3, 5},
