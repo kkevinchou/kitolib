@@ -36,11 +36,11 @@ func NewSDLPlatform(window *sdl.Window, imguiIO imgui.IO) *SDLPlatform {
 
 func (platform *SDLPlatform) PollInput() Input {
 	platform.currentFrameInput = Input{
-		WindowEvent:       WindowEvent{},
-		MouseInput:        MouseInput{},
-		KeyboardInput:     KeyboardInput{},
-		CameraOrientation: mgl64.QuatIdent(),
-		Commands:          []any{},
+		WindowEvent:    WindowEvent{},
+		MouseInput:     MouseInput{},
+		KeyboardInput:  KeyboardInput{},
+		CameraRotation: mgl64.QuatIdent(),
+		Commands:       []any{},
 	}
 
 	x, y, mouseState := sdl.GetMouseState()
