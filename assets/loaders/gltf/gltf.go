@@ -39,6 +39,9 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 
 	document.Name = name
 
+	// if strings.Contains(name, "dude") {
+	// 	documentPath = "C:\\Users\\Kevin\\goprojects\\izzet\\.project\\scene\\content\\dude.gltf"
+	// }
 	gltfDocument, err := gltf.Open(documentPath)
 	if err != nil {
 		return nil, err

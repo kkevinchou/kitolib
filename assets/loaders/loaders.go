@@ -14,7 +14,7 @@ import (
 )
 
 func LoadTextures(directory string) map[string]*textures.Texture {
-	var subDirectories []string = []string{"images", "icons", "gltf"}
+	var subDirectories []string = []string{"images", "icons", "gltf", "test"}
 
 	extensions := map[string]any{
 		".png":  nil,

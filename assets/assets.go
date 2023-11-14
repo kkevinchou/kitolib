@@ -67,8 +67,7 @@ func (a *AssetManager) GetFont(name string) font.Font {
 func (a *AssetManager) LoadDocument(name string, filepath string) bool {
 	scene := loaders.LoadDocument(name, filepath)
 	if _, ok := a.documents[name]; ok {
-		fmt.Printf("document with name %s already previously loaded", name)
-		return false
+		fmt.Printf("warning, document with name %s already previously loaded", name)
 	}
 
 	a.documents[name] = scene

@@ -15,23 +15,23 @@ func ProjectPointOnPlane(point mgl64.Vec3, plane collider.Plane) mgl64.Vec3 {
 	return projectedPoint
 }
 
-// func IntersectRayPlane(ray collider.Ray, plane collider.Plane) (mgl64.Vec3, bool) {
-// 	// front determines whether the ray can hit the plane or not
-// 	directionDotNormal := ray.Direction.Dot(plane.Normal)
-// 	if directionDotNormal == 0 {
-// 		return mgl64.Vec3{}, false
-// 	}
+func IntersectRayPlane(ray collider.Ray, plane collider.Plane) (mgl64.Vec3, bool) {
+	// front determines whether the ray can hit the plane or not
+	directionDotNormal := ray.Direction.Dot(plane.Normal)
+	if directionDotNormal == 0 {
+		return mgl64.Vec3{}, false
+	}
 
-// 	t := (plane.Point.Sub(ray.Origin)).Dot(plane.Normal)
-// 	t /= directionDotNormal
+	t := (plane.Point.Sub(ray.Origin)).Dot(plane.Normal)
+	t /= directionDotNormal
 
-// 	if t < 0 {
-// 		return mgl64.Vec3{}, true
-// 	}
+	if t < 0 {
+		return mgl64.Vec3{}, false
+	}
 
-// 	intersectionPoint := ray.Origin.Add(ray.Direction.Mul(t))
-// 	return intersectionPoint, true
-// }
+	intersectionPoint := ray.Origin.Add(ray.Direction.Mul(t))
+	return intersectionPoint, true
+}
 
 func IntersectRayTriangle(ray collider.Ray, triangle collider.Triangle) (mgl64.Vec3, bool) {
 	plane := collider.Plane{
