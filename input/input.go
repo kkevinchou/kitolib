@@ -100,6 +100,10 @@ type KeyboardInput map[KeyboardKey]KeyState
 type QuitCommand struct {
 }
 
+type FileDropCommand struct {
+	File string
+}
+
 type WindowEvent struct {
 	Resized bool
 }

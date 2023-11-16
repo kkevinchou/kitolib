@@ -77,6 +77,9 @@ func (platform *SDLPlatform) PollInput() Input {
 
 func (platform *SDLPlatform) processEvent(event sdl.Event) {
 	switch event.GetType() {
+	case sdl.DROPFILE:
+		dropEvent := event.(*sdl.DropEvent)
+		platform.currentFrameInput.Commands = append(platform.currentFrameInput.Commands, FileDropCommand{File: dropEvent.File})
 	case sdl.QUIT:
 		platform.currentFrameInput.Commands = append(platform.currentFrameInput.Commands, QuitCommand{})
 	case sdl.MOUSEWHEEL:
