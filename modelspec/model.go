@@ -88,6 +88,8 @@ type Document struct {
 
 	// not sure where to put this
 	RootJoint *JointSpec
+
+	PeripheralFiles []string
 }
 
 type MeshSpecification struct {

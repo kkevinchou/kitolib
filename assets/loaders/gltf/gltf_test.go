@@ -8,7 +8,7 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
-var testFile string = "../../../_assets/gltf/alpha.gltf"
+var testFile string = "../../../_assets/gltf/dude.gltf"
 var testFile2 string = "../../../_assets/gltf/demo_scene_west.gltf"
 var testFile3 string = "../../../_assets/gltf/mountain.gltf"
 var testFile4 string = "../../../_assets/gltf/lootbox.gltf"
