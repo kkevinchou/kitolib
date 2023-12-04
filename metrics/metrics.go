@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	bucketSize = 1000
+	bucketSize = 100000
 )
 
 type DataPoint struct {
