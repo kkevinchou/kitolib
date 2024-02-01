@@ -88,6 +88,7 @@ const (
 
 	KeyboardEventUp = iota
 	KeyboardEventDown
+	KeyboardEventNone
 )
 
 type KeyState struct {
@@ -152,20 +153,36 @@ func (i *InputCollector) SetMousePosition(x float64, y float64) {
 	i.MousePosition[1] = y
 }
 
-func (i *InputCollector) SetMouseButtonEvent(index int, event MouseButtonEvent) {
-	i.MouseButtonEvent[index] = event
+func (i *InputCollector) SetMouseButtonEvent(index int, down bool) {
+	if down {
+		i.MouseButtonEvent[index] = MouseButtonEventDown
+	} else {
+		i.MouseButtonEvent[index] = MouseButtonEventUp
+	}
 }
-func (i *InputCollector) SetMouseButtonDown(index int, value bool) {
+func (i *InputCollector) SetMouseButtonState(index int, value bool) {
 	i.MouseButtonState[index] = value
 }
 
-func (i *InputCollector) SetKeyState(key string) {
+func (i *InputCollector) SetKeyStateEnabled(key string) {
 	iKey := KeyboardKey(key)
 	if _, ok := i.KeyboardInput[iKey]; !ok {
 		i.KeyboardInput[iKey] = KeyState{
 			Key:   iKey,
-			Event: KeyboardEventDown,
+			Event: KeyboardEventNone,
 		}
+	}
+}
+
+func (i *InputCollector) AddKeyEvent(key string, down bool) {
+	iKey := KeyboardKey(key)
+	event := KeyboardEventDown
+	if !down {
+		event = KeyboardEventUp
+	}
+	i.KeyboardInput[iKey] = KeyState{
+		Key:   iKey,
+		Event: KeyboardEvent(event),
 	}
 }
 
