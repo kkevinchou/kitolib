@@ -26,7 +26,7 @@ type MouseInput struct {
 	MouseWheelDelta  int
 	MouseMotionEvent MouseMotionEvent
 	MouseButtonEvent [3]MouseButtonEvent
-	Buttons          [3]bool // left, right, middle
+	MouseButtonState [3]bool // left, right, middle
 }
 
 type KeyboardKey string
@@ -131,3 +131,62 @@ type Input struct {
 // 		MouseInput:    i.MouseInput,
 // 	}
 // }
+
+type InputCollector struct {
+	MousePosition    [2]float64
+	MouseButtonState [3]bool
+	KeyboardInput    KeyboardInput
+	MouseWheelDelta  int
+	MouseMotionEvent MouseMotionEvent
+	MouseButtonEvent [3]MouseButtonEvent
+}
+
+func NewInputCollector() *InputCollector {
+	return &InputCollector{
+		KeyboardInput: KeyboardInput{},
+	}
+}
+
+func (i *InputCollector) SetMousePosition(x float64, y float64) {
+	i.MousePosition[0] = x
+	i.MousePosition[1] = y
+}
+
+func (i *InputCollector) SetMouseButtonEvent(index int, event MouseButtonEvent) {
+	i.MouseButtonEvent[index] = event
+}
+func (i *InputCollector) SetMouseButtonDown(index int, value bool) {
+	i.MouseButtonState[index] = value
+}
+
+func (i *InputCollector) SetKeyState(key string) {
+	iKey := KeyboardKey(key)
+	if _, ok := i.KeyboardInput[iKey]; !ok {
+		i.KeyboardInput[iKey] = KeyState{
+			Key:   iKey,
+			Event: KeyboardEventDown,
+		}
+	}
+}
+
+func (i *InputCollector) AddMouseWheelDelta(x float64, y float64) {
+	i.MouseWheelDelta += int(y)
+}
+
+func (i *InputCollector) AddMouseMotion(x float64, y float64) {
+	i.MouseMotionEvent.XRel += x
+	i.MouseMotionEvent.YRel += y
+}
+
+func (i *InputCollector) GetInput() Input {
+	return Input{
+		MouseInput: MouseInput{
+			Position:         mgl64.Vec2{i.MousePosition[0], i.MousePosition[1]},
+			MouseMotionEvent: i.MouseMotionEvent,
+			MouseWheelDelta:  i.MouseWheelDelta,
+			MouseButtonEvent: i.MouseButtonEvent,
+			MouseButtonState: i.MouseButtonState,
+		},
+		KeyboardInput: i.KeyboardInput,
+	}
+}
