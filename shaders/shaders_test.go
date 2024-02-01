@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/gl/v3.2-core/gl"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/veandco/go-sdl2/sdl"
 )

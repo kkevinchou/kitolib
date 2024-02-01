@@ -30,7 +30,7 @@ func GetFileMetaData(directory string, subDirectories []string, extensions map[s
 		files, err := os.ReadDir(subDir)
 		if err != nil {
 			fmt.Println(err)
-			return nil
+			continue
 		}
 
 		for _, file := range files {
