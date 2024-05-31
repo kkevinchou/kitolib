@@ -5,8 +5,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kkevinchou/kitolib/assets/loaders/backends/opengl"
-	"github.com/kkevinchou/kitolib/assets/loaders/gltf"
+	"github.com/kkevinchou/internal/assets/loaders/backends/opengl"
+	"github.com/kkevinchou/internal/assets/loaders/gltf"
 	"github.com/kkevinchou/kitolib/font"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/textures"

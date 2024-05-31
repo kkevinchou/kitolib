@@ -34,7 +34,8 @@ func NewTriangle(points [3]mgl64.Vec3) Triangle {
 }
 
 type TriMesh struct {
-	Triangles []Triangle
+	Triangles   []Triangle
+	DebugPoints []mgl64.Vec3
 }
 
 func (t TriMesh) Transform(transform mgl64.Mat4) TriMesh {

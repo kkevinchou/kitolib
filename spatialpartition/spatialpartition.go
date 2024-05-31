@@ -78,6 +78,9 @@ func (s *SpatialPartition) QueryEntities(boundingBox collider.BoundingBox) []Ent
 		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
 		for _, e := range partition.entities {
 			if _, ok := seen[e.GetID()]; !ok {
+				// if e.GetID() == 561 {
+				// 	fmt.Println("FOUND VAMPIRE", partitionKey)
+				// }
 				seen[e.GetID()] = true
 				candidates = append(candidates, e)
 			}
@@ -242,9 +245,8 @@ func (s *SpatialPartition) VertexToPartitionClamped(vertex mgl64.Vec3, clampMin,
 func (s *SpatialPartition) DeleteEntity(entityID int) {
 	partitions := s.entityPartitionCache[entityID]
 	for partitionKey := range partitions {
-		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
-		delete(partition.entities, entityID)
-		delete(s.entityPartitionCache, entityID)
-		delete(s.entityPositionCache, entityID)
+		delete(s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]].entities, entityID)
 	}
+	delete(s.entityPartitionCache, entityID)
+	delete(s.entityPositionCache, entityID)
 }

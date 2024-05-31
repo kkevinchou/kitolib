@@ -2,6 +2,7 @@ package gltf
 
 import (
 	"fmt"
+	"path"
 	"sort"
 	"strings"
 	"time"
@@ -85,7 +86,13 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 
 	for _, texture := range gltfDocument.Textures {
 		img := gltfDocument.Images[int(*texture.Source)]
-		if img.MimeType != "image/png" && img.MimeType != "image/jpeg" && img.MimeType != "image/jpg" {
+
+		if img.MimeType == "" {
+			extension := path.Ext(img.URI)
+			if extension != ".png" {
+				panic(fmt.Sprintf("image extension %s is not supported (png, jpeg, jpg)", extension))
+			}
+		} else if img.MimeType != "image/png" && img.MimeType != "image/jpeg" && img.MimeType != "image/jpg" {
 			panic(fmt.Sprintf("image %s has mimetype %s which is not supported for textures (png, jpeg, jpg)", img.Name, img.MimeType))
 		}
 
