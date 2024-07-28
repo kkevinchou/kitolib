@@ -1,6 +1,8 @@
 package checks
 
 import (
+	"math"
+
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
@@ -34,12 +36,20 @@ func IntersectRayPlane(ray collider.Ray, plane collider.Plane) (mgl64.Vec3, bool
 }
 
 func IntersectRayTriangle(ray collider.Ray, triangle collider.Triangle) (mgl64.Vec3, bool) {
-	plane := collider.Plane{
-		Point:  triangle.Points[0],
-		Normal: triangle.Normal,
+	nDotDir := triangle.Normal.Dot(ray.Direction)
+	if math.Abs(nDotDir) <= 0.001 {
+		// ray direction is perpendicular to normal
+		return mgl64.Vec3{}, false
 	}
 
-	point := ProjectPointOnPlane(ray.Origin, plane)
+	d := triangle.Points[0].Dot(triangle.Normal)
+	t := (d - triangle.Normal.Dot(ray.Origin)) / nDotDir
+	if t < 0 {
+		// don't count plane from behind
+		return mgl64.Vec3{}, false
+	}
+
+	point := ray.Origin.Add(ray.Direction.Mul(t))
 
 	if PointInTriangle(point, triangle) {
 		return point, true
