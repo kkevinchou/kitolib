@@ -48,3 +48,30 @@ func GetFileMetaData(directory string, subDirectories []string, extensions map[s
 
 	return metaDataCollection
 }
+
+func GetFileMetaDataRecursive(directory string, extensions map[string]any, keyPrefix string, recurse bool, metaDataCollection map[string]FileMetaData) {
+	files, err := os.ReadDir(directory)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, file := range files {
+		extension := filepath.Ext(file.Name())
+
+		if file.IsDir() && string(file.Name()[0]) != "_" {
+			if recurse {
+				GetFileMetaDataRecursive(filepath.Join(directory, file.Name()), extensions, file.Name()+"/", true, metaDataCollection)
+			}
+		} else {
+			if _, ok := extensions[extension]; !ok {
+				continue
+			}
+
+			path := filepath.Join(directory, file.Name())
+			name := keyPrefix + file.Name()[0:len(file.Name())-len(extension)]
+
+			metaDataCollection[name] = FileMetaData{Name: name, Path: path, Extension: extension}
+		}
+	}
+}
