@@ -36,30 +36,34 @@ type PrimitiveSpecification struct {
 	// the ordered vertices where each triplet forms a triangle for the mesh
 	Vertices []Vertex
 
-	// PBR
+	MaterialIndex string
+}
+
+type MaterialSpecification struct {
+	ID          string
 	PBRMaterial *PBRMaterial
 }
 
-// // ModelSpecification is the output of any parsed model files (e.g. from Blender, Maya, etc)
-// // and acts a the blueprint for the model that contains all the associated vertex and
-// // animation data. This struct should be agnostic to the 3D modelling tool that produced the data.
-// type ModelSpecification struct {
-// 	Meshes []*MeshSpecification
+// ModelSpecification is the output of any parsed model files (e.g. from Blender, Maya, etc)
+// and acts a the blueprint for the model that contains all the associated vertex and
+// animation data. This struct should be agnostic to the 3D modelling tool that produced the data.
+type ModelSpecification struct {
+	Meshes []*MeshSpecification
 
-// 	// Joint Hierarchy
-// 	RootJoint *JointSpec
+	// Joint Hierarchy
+	RootJoint *JointSpec
 
-// 	// Animations
-// 	Animations map[string]*AnimationSpec
+	// Animations
+	Animations map[string]*AnimationSpec
 
-// 	RootTransforms mgl32.Mat4
+	RootTransforms mgl32.Mat4
 
-// 	JointMap map[int]*JointSpec
+	JointMap map[int]*JointSpec
 
-// 	// list of textures by name. the index within this slice is
-// 	// the id for which the modespec references textures
-// 	Textures []string
-// }
+	// list of textures by name. the index within this slice is
+	// the id for which the modespec references textures
+	Textures []string
+}
 
 type Scene struct {
 	Nodes []*Node
@@ -79,9 +83,10 @@ type Node struct {
 type Document struct {
 	Name string
 
-	Scenes   []*Scene
-	Meshes   []*MeshSpecification
-	Textures []string
+	Scenes    []*Scene
+	Meshes    []*MeshSpecification
+	Materials []MaterialSpecification
+	Textures  []string
 
 	JointMap   map[int]*JointSpec
 	Animations map[string]*AnimationSpec
@@ -134,13 +139,3 @@ func (s byWeights) Less(i, j int) bool {
 // 		calculateInverseBindTransform(child, bindTransform)
 // 	}
 // }
-
-func (m *PrimitiveSpecification) TextureName() string {
-	if m.PBRMaterial == nil {
-		return ""
-	}
-	if m.PBRMaterial.PBRMetallicRoughness == nil {
-		return ""
-	}
-	return m.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName
-}
