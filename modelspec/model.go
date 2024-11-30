@@ -5,7 +5,7 @@ import (
 )
 
 type PBRMetallicRoughness struct {
-	BaseColorTextureIndex       *int
+	BaseColorTextureIndex       int
 	BaseColorTextureName        string
 	BaseColorFactor             mgl32.Vec4
 	MetalicFactor               float32
@@ -14,7 +14,7 @@ type PBRMetallicRoughness struct {
 }
 
 type PBRMaterial struct {
-	PBRMetallicRoughness *PBRMetallicRoughness
+	PBRMetallicRoughness PBRMetallicRoughness
 }
 
 type Vertex struct {
@@ -41,7 +41,7 @@ type PrimitiveSpecification struct {
 
 type MaterialSpecification struct {
 	ID          string
-	PBRMaterial *PBRMaterial
+	PBRMaterial PBRMaterial
 }
 
 // ModelSpecification is the output of any parsed model files (e.g. from Blender, Maya, etc)

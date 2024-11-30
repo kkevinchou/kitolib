@@ -48,8 +48,19 @@ func NewShaderManager(directory string) *ShaderManager {
 
 func (s *ShaderManager) CompileShaderProgram(name, vertexShader, fragmentShader, geometryShader string) error {
 	shaderProgram := gl.CreateProgram()
-	gl.AttachShader(shaderProgram, s.vertexShaders[vertexShader])
-	gl.AttachShader(shaderProgram, s.fragmentShaders[fragmentShader])
+
+	if shader, ok := s.vertexShaders[vertexShader]; ok {
+		gl.AttachShader(shaderProgram, shader)
+	} else {
+		return fmt.Errorf("vertex shader %s not found", vertexShader)
+	}
+
+	if shader, ok := s.fragmentShaders[fragmentShader]; ok {
+		gl.AttachShader(shaderProgram, shader)
+	} else {
+		return fmt.Errorf("fragment shader %s not found", fragmentShader)
+	}
+
 	if geometryShader != "" {
 		gl.AttachShader(shaderProgram, s.geometryShaders[geometryShader])
 	}
