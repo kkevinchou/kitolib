@@ -96,6 +96,25 @@ func (player *AnimationPlayer) PlayAnimation(animationName string) {
 	}
 }
 
+func (player *AnimationPlayer) SetCurrentAnimationFrame(animation string, keyframe int) {
+	if _, ok := player.animations[animation]; !ok {
+		return
+	}
+	player.currentAnimation = player.animations[animation]
+	keyFrames := player.currentAnimation.KeyFrames
+
+	if keyframe >= len(keyFrames) {
+		return
+	}
+
+	startKeyFrame := keyFrames[keyframe]
+	endKeyFrame := keyFrames[(keyframe+1)%len(keyFrames)]
+
+	pose := interpolatePoses(startKeyFrame.Pose, endKeyFrame.Pose, 0)
+	animationTransforms := player.computeAnimationTransforms(pose)
+	player.animationTransforms = animationTransforms
+}
+
 func (player *AnimationPlayer) PlayAndBlendAnimation(animationName string, blendDuration time.Duration) {
 	if player.currentAnimation == nil {
 		fmt.Println("NO ANIMATION TO BLEND FROM")
