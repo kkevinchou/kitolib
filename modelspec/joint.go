@@ -14,6 +14,8 @@ type JointSpec struct {
 	// it is the inverse of InverseBindTransform
 	FullBindTransform mgl32.Mat4
 
+	LocalBindTransform mgl32.Mat4
+
 	Children []*JointSpec
 	Parent   *JointSpec
 }

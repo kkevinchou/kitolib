@@ -219,8 +219,18 @@ func computeJointTransformsHelper(joint *modelspec.JointSpec, parentTransform mg
 	localTransform := pose[joint.ID]
 
 	if _, ok := pose[joint.ID]; !ok {
-		panic(fmt.Sprintf("joint with id %d does not have a pose", joint.ID))
-		// 	localTransform = joint.LocalBindTransform
+		// if there is no pose in the animation, just use the local bind transform.
+		// when a pose is present, the keyframe data already includes the local bind transform
+
+		// using the identity matrix is not correct, we still need the bind transform.
+		// further down, we multiply by the inverse bind transform which is what allows us
+		// to cancel out the local bind transform and produce the actual output identity matrix
+
+		localTransform = joint.LocalBindTransform
+		// localTransform = joint.InverseBindTransform.Inv()
+
+		// this is wrong, should not be identity
+		// localTransform = mgl32.Ident4()
 	}
 
 	// model-space transform that includes all the parental transforms
