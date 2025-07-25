@@ -1,15 +1,12 @@
 package collision
 
 import (
-	"fmt"
-
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/collision/collider"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
-type ContactsBySeparatingDistance []*Contact
+type ContactsBySeparatingDistance []Contact
 
 func (c ContactsBySeparatingDistance) Len() int {
 	return len(c)
@@ -21,36 +18,26 @@ func (c ContactsBySeparatingDistance) Less(i, j int) bool {
 	return c[i].SeparatingDistance < c[j].SeparatingDistance
 }
 
+type Contact struct {
+	PackedIndexA int
+	PackedIndexB int
+	Type         ContactType
+
+	SeparatingVector   mgl64.Vec3
+	SeparatingDistance float64
+}
+
 type ContactType string
 
 var ContactTypeCapsuleTriMesh ContactType = "TRIMESH"
 var ContactTypeCapsuleCapsule ContactType = "CAPSULE"
 
-type Contact struct {
-	EntityID       *int
-	SourceEntityID *int
-	Type           ContactType
-
-	TriIndex           *int
-	Point              mgl64.Vec3
-	Normal             mgl64.Vec3
-	SeparatingVector   mgl64.Vec3
-	SeparatingDistance float64
-}
-
-func (c *Contact) String() string {
-	var result = fmt.Sprintf("{ EntityID: %d, TriIndex: %d ", *c.EntityID, *c.TriIndex)
-	result += fmt.Sprintf("[ SV: %s, N: %s, D: %.3f D2: %.3f]", utils.PPrintVec(c.SeparatingVector), utils.PPrintVec(c.Normal), c.SeparatingDistance, c.SeparatingVector.Len())
-	result += " }"
-	return result
-}
-
-func CheckCollisionCapsuleTriMesh(capsule collider.Capsule, triangulatedMesh collider.TriMesh) []*Contact {
-	var contacts []*Contact
-	for i, tri := range triangulatedMesh.Triangles {
-		if triContact := CheckCollisionCapsuleTriangle(capsule, tri); triContact != nil {
-			index := i
-			triContact.TriIndex = &index
+func CheckCollisionCapsuleTriMesh(capsule collider.Capsule, triangulatedMesh collider.TriMesh) []Contact {
+	var contacts []Contact
+	for _, tri := range triangulatedMesh.Triangles {
+		if triContact, collision := CheckCollisionCapsuleTriangle(capsule, tri); collision {
+			// index := i
+			// triContact.TriIndex = &index
 			contacts = append(contacts, triContact)
 		}
 	}
@@ -58,7 +45,7 @@ func CheckCollisionCapsuleTriMesh(capsule collider.Capsule, triangulatedMesh col
 	return contacts
 }
 
-func CheckCollisionCapsuleTriangle(capsule collider.Capsule, triangle collider.Triangle) *Contact {
+func CheckCollisionCapsuleTriangle(capsule collider.Capsule, triangle collider.Triangle) (Contact, bool) {
 	closestPoints, closestPointsDistance := checks.ClosestPointsLineVSTriangle(
 		collider.Line{P1: capsule.Top, P2: capsule.Bottom},
 		triangle,
@@ -66,7 +53,7 @@ func CheckCollisionCapsuleTriangle(capsule collider.Capsule, triangle collider.T
 
 	if closestPointsDistance == 0 {
 		// separating vector of length 0
-		return nil
+		return Contact{}, false
 	}
 
 	if closestPointsDistance < capsule.Radius {
@@ -78,20 +65,20 @@ func CheckCollisionCapsuleTriangle(capsule collider.Capsule, triangle collider.T
 			separatingVec = separatingVec.Add(triangle.Normal.Mul(capsule.Radius * 2))
 			separatingDistance = separatingVec.Len()
 		}
-		return &Contact{
-			Point:              closestPoints[1],
-			Normal:             triangle.Normal,
+		return Contact{
+			// Point:              closestPoints[1],
+			// Normal:             triangle.Normal,
 			SeparatingVector:   separatingVec,
 			SeparatingDistance: separatingDistance,
 			Type:               ContactTypeCapsuleTriMesh,
-		}
+		}, true
 	}
 
-	return nil
+	return Contact{}, false
 }
 
 // for now assumes vertical capsules only
-func CheckCollisionCapsuleCapsule(capsule1 collider.Capsule, capsule2 collider.Capsule) *Contact {
+func CheckCollisionCapsuleCapsule(capsule1 collider.Capsule, capsule2 collider.Capsule) (Contact, bool) {
 	closestPoints, closestPointsDistance := checks.ClosestPointsLineVSLine(
 		collider.Line{P1: capsule1.Top, P2: capsule1.Bottom},
 		collider.Line{P1: capsule2.Top, P2: capsule2.Bottom},
@@ -109,15 +96,15 @@ func CheckCollisionCapsuleCapsule(capsule1 collider.Capsule, capsule2 collider.C
 
 		capsule2To1Dir := capsule2To1.Normalize()
 		separatingVec := capsule2To1Dir.Mul(separatingDistance)
-		return &Contact{
-			Point:              capsule2To1Dir.Mul(closestPointsDistance),
+		return Contact{
+			// Point:              capsule2To1Dir.Mul(closestPointsDistance),
 			SeparatingVector:   separatingVec,
 			SeparatingDistance: separatingDistance,
 			Type:               ContactTypeCapsuleCapsule,
-		}
+		}, true
 	}
 
-	return nil
+	return Contact{}, false
 }
 
 func CheckOverlapAABBAABB(aabb1 *collider.BoundingBox, aabb2 *collider.BoundingBox) bool {
@@ -135,19 +122,3 @@ func CheckOverlapAABBAABB(aabb1 *collider.BoundingBox, aabb2 *collider.BoundingB
 
 	return true
 }
-
-// func CheckCollisionSpherePoint(sphere collider.Sphere, point mgl64.Vec3) *ContactManifold {
-// 	lenSq := sphere.Center.Sub(mgl64.Vec3(point)).LenSqr()
-// 	if lenSq < sphere.RadiusSquared {
-// 		return &ContactManifold{
-// 			Contacts: []Contact{
-// 				{
-// 					Point: mgl64.Vec3{point[0], point[1], point[2]},
-// 					// Normal: sphere.Center.Sub(mgl64.Vec3(point)),
-// 				},
-// 			},
-// 		}
-// 	}
-
-// 	return nil
-// }
